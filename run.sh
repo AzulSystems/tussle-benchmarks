@@ -104,8 +104,7 @@ EOF
     log "  JAVA_OPTS: ${java_opts}"
     (
     cd "${bench_dir}"
-    cat ${BASE_DIR}/logging.properties | logx "  "
-    ${java_home}/bin/java ${java_opts} -Djava.util.logging.config.file=${BASE_DIR}/logging.properties -jar ${tus_spring_jar} config.yaml
+    ${java_home}/bin/java ${java_opts} -jar ${tus_spring_jar} config.yaml
     )
     local res=$?
     [[ "${SERVER_HOST}" == builtin ]] && stop_monitor_tools

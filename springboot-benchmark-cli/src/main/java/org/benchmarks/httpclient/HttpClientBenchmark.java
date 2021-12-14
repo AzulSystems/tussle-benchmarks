@@ -34,17 +34,13 @@ public class HttpClientBenchmark extends WlBenchmark {
     public RunnableWithError getWorkload() {
         return () -> {
             boolean success = false;
-            totalCount.incrementAndGet();
             final HttpGet request = new HttpGet(targetURI);
             try (CloseableHttpResponse httpResponse = httpClient.execute(request)) {
                 request.reset();
-                if (httpResponse.getStatusLine().getStatusCode() != expectedHttpCode) {
-                    totalErrors.incrementAndGet();
-                } else {
+                if (httpResponse.getStatusLine().getStatusCode() == expectedHttpCode) {
                     success = true;
                 }
             } catch (Exception e) {
-                totalErrors.incrementAndGet();
             }
             return success;
         };

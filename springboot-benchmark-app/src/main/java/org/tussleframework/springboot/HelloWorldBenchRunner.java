@@ -30,18 +30,21 @@
  * 
  */
 
-package org.benchmarks.httpclient;
+package org.tussleframework.springboot;
 
-import org.benchmarks.WlConfig;
+import java.util.Arrays;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import org.tussleframework.BasicRunner;
+import org.tussleframework.tools.LoggerTool;
 
-@Data
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
-public class HttpClientBenchmarkConfig extends WlConfig {
-    public String targetURI = "http://localhost:8080";
-    public int expectedHttpCode = 200;
+public class HelloWorldBenchRunner {
+    public static void main(String[] args) {
+        if (args.length > 0 && (args[0].equals("-server") || args[0].equals("--server"))) {
+            args = Arrays.copyOfRange(args, 1, args.length);
+            HelloWorldApp.main(args);
+        } else {
+            LoggerTool.init("benchmark");
+            new BasicRunner().run(HelloWorldBench.class, args);
+        }
+    }
 }

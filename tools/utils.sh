@@ -1,23 +1,23 @@
 #!/bin/bash
 #
-# Copyright 2018-2021 Azul Systems Inc.  All Rights Reserved.
+# Copyright (c) 2018-2022 Azul Systems
 #
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 # * Redistributions of source code must retain the above copyright notice, this
 #   list of conditions and the following disclaimer.
-# 
+#
 # * Redistributions in binary form must reproduce the above copyright notice,
 #   this list of conditions and the following disclaimer in the documentation
 #   and/or other materials provided with the distribution.
-# 
+#
 # * Neither the name of [project] nor the names of its
 #   contributors may be used to endorse or promote products derived from
 #   this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -28,8 +28,9 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 
-# 
+#
 # Common script utility methods v2.0
 #
 
@@ -50,14 +51,10 @@ STAMP=${STAMP:-$(date -u '+%Y%m%d_%H%M%S')}
 RESULTS_DIR=${RESULTS_DIR:-"$(pwd)/results_$STAMP"}
 
 WAIT_TIME=${WAIT_TIME:-300}
-USE_IPSTATS=${USE_IPSTATS:-true}
-USE_TOP=${USE_TOP:-true}
-USE_MPSTAT=${USE_MPSTAT:-true}
-USE_DISKSTATS=${USE_DISKSTATS:-true}
-CLUSTER=${CLUSTER:-false}
+USE_MONITORS=${USE_MONITORS:-all}
 DROP_CACHES=${DROP_CACHES:-true}
 CLEAN_DEV_SHM=${CLEAN_DEV_SHM:-true}
-CLUSTER_NAME=${CLUSTER_NAME:-${BENCHMARK%-*}_perf_test}
+CLUSTER_NAME=${CLUSTER_NAME:-${BENCHMARK%-*}_test}
 
 HOSTNAME_CMD=${HOSTNAME_CMD:-"hostname -A"}
 HOSTNAME=$( ${HOSTNAME_CMD} )
@@ -112,7 +109,6 @@ ARGS=()
 NODE_OPTS=()
 REMOTE_UTILS_CMD=${REMOTE_UTILS_CMD:-UTILS_CMD}
 
-jq="${UTILS_SCRIPT_DIR}/jq"
 SSH_USER=${SSH_USER:-${USER}}
 SSH_EXT_ARGS=${SSH_EXT_ARGS:-"-o StrictHostKeyChecking=no -o PasswordAuthentication=no"}
 SSH_KEY=${SSH_KEY:-""}
@@ -124,6 +120,17 @@ SSH_HIDE_BANNER=${SSH_HIDE_BANNER:-false}
 
 is_true() {
     if [[ "${1}" == 1 || "${1}" == true || "${1}" == TRUE || "${1}" == yes || "${1}" == YES || "${1}" == on || "${1}" == ON ]]
+    then
+        return 0
+    else
+        return 1
+    fi
+}
+
+has_item() {
+    local item=${1,,}
+    local list=,${2,,},
+    if [[ "${list}" == ,all, || "${list}" == *,${item},* ]]
     then
         return 0
     else
@@ -281,6 +288,19 @@ check_bc() {
         unset bc
         fail "BC verification failed!"
     fi
+}
+
+first_file() {
+    while [[ -n "$1" ]]
+    do
+        if [[ -f "$1" ]]
+        then 
+            echo "$1"
+            return 0
+        fi
+        shift
+    done
+    return 1
 }
 
 mk_res_dir() {
@@ -560,7 +580,7 @@ get_apps_dir() {
 }
 
 clean_dev_shm() {
-    is_true "$CLEAN_DEV_SHM" || return
+    is_true "${CLEAN_DEV_SHM}" || return
     log "Cleaning /dev/shm..."
     find /dev/shm -maxdepth 1 ! -name 'queue.*' ! -path /dev/shm -print -exec rm -fr {} + |& logx "### "
 }
@@ -804,10 +824,10 @@ cat_files() {
     local p_file
     for p_file in $(ls "${path}")
     do
-        if [[ -f "${path}/$p_file" ]]
+        if [[ -f "${path}/${p_file}" ]]
         then
-            echo -n "$p_file: "
-            cat "${path}/$p_file"
+            echo -n "${p_file}: "
+            cat "${path}/${p_file}"
         fi
     done
 }
@@ -823,7 +843,7 @@ print_thp_info() {
     fi
     [[ -d "${thp_path}" ]] || return
     echo "THP path: ${thp_path}"
-    cat_files ${thp_path}
+    cat_files "${thp_path}"
 }
 
 print_sys_info() {
@@ -983,18 +1003,9 @@ wait_for_app_start() {
     return 0
 }
 
-start_ipstats() {
-    is_true "${USE_IPSTATS}" || return
-    local output=${1:-$(pwd)/ipstat.log}
-    local hname=${2:-${HOSTNAME}}
-    local delay=5
-    bash "${UTILS_SCRIPT_DIR}/ipstats.sh" "${delay}" "${hname}" &> "${output}" &
-    log "Started IP stats"
-}
-
 start_top() {
-    is_true "${USE_TOP}" || return
-    local output=${1:-$(pwd)/top.log}
+    has_item top "${USE_MONITORS}" || return
+    local output=${1:-top.log}
     local hname=${2:-${HOSTNAME}}
     local delay=5
     local start=$(get_stamp)
@@ -1023,50 +1034,53 @@ start_top() {
 }
 
 start_mpstat() {
-    is_true "${USE_MPSTAT}" || return
-    local output=${1:-$(pwd)/mpstat.log}
-    local hname=${2:-${HOSTNAME}}
-    local delay=5
-    local start=$(get_stamp)
-    log "Starting mpstat..."
-    {
-    echo "DELAY: ${delay}"
-    echo "START: ${start}"
-    echo "HOST: ${hname}"
-    echo
-    mpstat -P ALL ${delay}
-    } &> "${output}" &
-    log "Started mpstat"
+    fork_monitor mpstat "${1}"
 }
 
 start_diskstats() {
-    is_true "${USE_DISKSTATS}" || return
-    local output=${1:-$(pwd)/diskstat.log}
-    local hname=${2:-${HOSTNAME}}
-    local delay=5
-    local start=$(get_stamp)
-    log "Starting sar for disk stats..."
-    {
-    echo "DELAY: ${delay}"
-    echo "START: ${start}"
-    echo "HOST: ${hname}"
-    echo
-    sar -d -p ${delay}
-    } &> "${output}" &
-    log "Started sar"
+    fork_monitor diskstats "${1}"
 }
 
-start_custom_scripts() {
+start_diskspace() {
+    local data_dir="$(get_data_dir ${hname})"
+    fork_monitor diskspace "${1}" "" 10 "${data_dir}" 
+}
+
+start_ipstats() {
+    fork_monitor ipstats "${1}"
+}
+
+start_vmstats() {
+    fork_monitor vmstats "${1}" "" 30
+}
+
+fork_monitor() {
+    local sname=$1
+    shift
+    has_item "${sname}" "${USE_MONITORS}" || return
+    local output=${1:-${sname}.log}
+    shift
+    local hname=${1:-${HOSTNAME}}
+    shift
+    local delay=${1:-5}
+    shift
+    local monitor=$(first_file "${sname}" "${sname}.sh" "${UTILS_SCRIPT_DIR}/${sname}" "${UTILS_SCRIPT_DIR}/${sname}.sh")
+    log "Starting ${sname} - ${monitor} (${@})..."
+    bash "${monitor}" "${delay}" "${hname}" "${@}" &> "${output}" &
+    log "Started ${sname} - ${monitor}: $?"
+}
+
+start_custom_script() {
     [[ -n "${CUSTOM_SCRIPT}" ]] || return
     local p=${CUSTOM_SCRIPT}
     p=${p##*/}
     p=${p%.*}
     log "Starting custom script: ${CUSTOM_SCRIPT}..."
-    "${CUSTOM_SCRIPT}"  &> "${1}/${p}.log" &
-    log "Started custom script"
+    "${CUSTOM_SCRIPT}" &> "${1}/${p}.log" &
+    log "Started custom script: $?"
 }
 
-stop_custom_scripts() {
+stop_custom_script() {
     [[ -n "${CUSTOM_SCRIPT}" ]] || return
     stop_process -f "^${CUSTOM_SCRIPT}$"
 }
@@ -1084,21 +1098,26 @@ check_monitors() {
 
 start_monitor_tools() {
 	local out_dir=${1}
+	mkdir -p "${out_dir}" || return 1
 	print_sys_info > "${out_dir}/system_info1.log"
     start_top "${out_dir}/top.log"
     start_mpstat "${out_dir}/mpstat.log"
     start_ipstats "${out_dir}/ipstat.log"
+    start_vmstats "${out_dir}/vmstats.log"
     start_diskstats "${out_dir}/diskstat.log"
-    start_custom_scripts "${out_dir}"
+    start_diskspace "${out_dir}/diskspace.log"
+    start_custom_script "${out_dir}"
 }
 
 stop_monitor_tools() {
 	local out_dir=${1}
-    is_true "${USE_TOP}" && stop_process top
-    is_true "${USE_MPSTAT}" && stop_process mpstat
-    is_true "${USE_DISKSTATS}" && stop_process sar
-    is_true "${USE_IPSTATS}" && stop_process -f ipstats.sh
-    stop_custom_scripts
+    has_item top "${USE_MONITORS}" && stop_process top
+    has_item mpstat "${USE_MONITORS}" && stop_process mpstat
+    has_item ipstats "${USE_MONITORS}" && stop_process -f ipstats.sh
+    has_item vmstats "${USE_MONITORS}" && stop_process -f vmstats.sh
+    has_item diskstats "${USE_MONITORS}" && stop_process sar
+    has_item diskspace "${USE_MONITORS}" && stop_process -f diskspace.sh
+    stop_custom_script
 }
 
 wait_for_port() {
@@ -1160,9 +1179,10 @@ node_cmd() {
         ${func} ${node} ${node_num} "${@}"
     else
         remote_cmd "${rhost}" "${REMOTE_UTILS_CMD}" \
+        "USE_MONITORS=${USE_MONITORS}" "CUSTOM_SCRIPT=${CUSTOM_SCRIPT}" \
         "DEBUG=${DEBUG}" "HOSTS_FILE=${HOSTS_FILE}" "SSH_USER=${SSH_USER}" \
         "APPS_DIR=${APPS_DIR}" "DATA_DIR=${DATA_DIR}" "APP_NAME=${APP_NAME}" \
-        "DIST_DIR=${DIST_DIR}" "PAR=${PAR}" "${NODE_OPTS[@]}" \
+        "DIST_DIR=${DIST_DIR}" "PAR=${PAR}" "CLEAN_DEV_SHM=${CLEAN_DEV_SHM}" "${NODE_OPTS[@]}" \
         ${func} ${node} ${node_num} "${@}"
     fi
     local res=$?
@@ -1792,6 +1812,24 @@ list_args() {
 
 declare -A var_arg_list
 
+print_arg_list() {
+    local args=${1}
+    local sep=${2:-": "}
+    IFS=','
+    local p=( ${args} )
+    local n=${#p[@]}
+    local q
+    IFS='='
+    for (( i = 0; i < n; i++ ))
+    do
+        q=( ${p[i]} )
+        local pname=${q[0]}
+        local pvalue=${q[1]}
+        echo "${pname}${sep}${pvalue}"
+    done
+    unset IFS
+}
+
 init_arg_list() {
     local args=${1}
     local k
@@ -1799,7 +1837,8 @@ init_arg_list() {
     do
         unset var_arg_list[$k]
     done
-    local p=( ${args//,/ } )
+    IFS=','
+    local p=( ${args} )
     local n=${#p[@]}
     local q
     IFS='='
@@ -1991,76 +2030,6 @@ set_properties() {
     fi
 }
 
-write_test_status() {
-    local name=${1}
-    local status=${2}
-    local time=${3}
-    [[ -n "${time}" ]] && time="spent ${time} seconds"
-    log "Test ${name} ${status} ${time}"
-    [[ -d "${RESULTS_DIR}" ]] && echo "${name}, ${status}, ${time}" >> "${RESULTS_DIR}/status.txt"
-}
-
-get_latency_scores() {
-    local json=${1}
-    local metrics=${2}
-    local nolatency=${3}
-    metrics=( ${metrics//,/ } )
-    local metric_name
-    local metric
-    local scale
-    local names
-    local values
-    for metric_name in "${metrics[@]}"
-    do
-        metric_name=$(echo ${metric_name})
-        [[ -z "$metric_name" ]] && continue
-        names=(` $jq -r '.doc.metrics[] | select(.operation == ''"'$metric_name'"'' and .name == ''"response_times"'') | .percentile_names | .[]' "$json" `)
-        values=(` $jq -r '.doc.metrics[] | select(.operation == ''"'$metric_name'"'' and .name == ''"response_times"'') | .percentile_values | .[]' "$json" `)
-        scale=` $jq -r '.doc.metrics[] | select(.operation == ''"'$metric_name'"'' and .name == ''"response_times"'') | .scale' "$json" `
-        [[ "$scale" == microseconds ]] && scale=us
-        [[ "$scale" == milliseconds ]] && scale=ms
-        local name
-        local value
-        local n=${#names[@]}
-        echo "#NAMES ${names[@]}"
-        for (( i = 0; i < n ; i++ ))
-        do
-            name=${names[$i]}
-            name=$(echo ${name} | sed "s|\\.0$||")
-            [[ "${name}" == 0 ]] && continue
-            value=$(echo ${values[$i]})
-            echo "Score on ${metric_name}_${name}th_percentile_latency: ${value} ${scale}"
-        done
-    done
-}
-
-get_tusla_scores() {
-    local json=${1}
-    local names=$( $jq -r '.metrics[] | select(.name == ''"conforming rate"'') | .operation' "${json}" | sed "s| |_|g;")
-    local units=$( $jq -r '.metrics[] | select(.name == ''"conforming rate"'') | .units' "${json}" )
-    local values=$( $jq -r '.metrics[] | select(.name == ''"conforming rate"'') | .value' "${json}" )
-    names=( ${names[@]} )
-    units=( ${units[@]} )
-    values=( ${values[@]} )
-    local n=${#names[@]}
-    local name
-    local value
-    local unit
-    for (( i = 0; i < n ; i++ ))
-    do
-        #echo "$i: ${names[i]} = ${values[i]} ${units[i]}"
-        name=$(echo ${names[i]} | sed "s|\\.0$||; s|_(unbroken)||; s|(serv)|serv|; s|(resp)|resp|; ")
-        value=$(echo ${values[i]})
-        unit=$(echo ${units[i]})
-        echo "Score on ConformingRate_${name}: ${value} ${unit}"
-    done
-    value=$( $jq -r '.metrics[] | select(.name == ''"high bound"'') | .value' "${json}")
-    unit=$( $jq -r '.metrics[] | select(.name == ''"high bound"'') | .units' "${json}")
-    echo "Score on HighBound: ${value} ${unit}"
-    value=$( $jq -r '.metrics[] | select(.name == ''"max rate"'') | .value' "${json}")
-    unit=$( $jq -r '.metrics[] | select(.name == ''"max rate"'') | .units' "${json}")
-    echo "Score on MaxRate: ${value} ${unit}"
-}
 
 t() {
     log "[TEST] Test [${@}]"

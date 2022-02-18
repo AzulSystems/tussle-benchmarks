@@ -30,11 +30,11 @@
  * 
  */
 
-package org.benchmarks.springboot;
+package org.tussleframework.springboot;
 
-import org.benchmarks.httpclient.HttpClientBenchmark;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.tussleframework.httpclient.HttpClientBenchmark;
 
 public class HelloWorldBench extends HttpClientBenchmark {
 

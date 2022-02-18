@@ -1,7 +1,7 @@
 import org.junit.jupiter.api.Test;
-import org.benchmarks.BasicRunner;
-import org.benchmarks.springboot.HelloWorldBench;
-import org.benchmarks.tools.Analyzer;
+import org.tussleframework.springboot.HelloWorldBench;
+import org.tussleframework.BasicRunner;
+import org.tussleframework.tools.Analyzer;
 
 public class HelloWorldBenchTest {
 

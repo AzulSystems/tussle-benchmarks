@@ -30,7 +30,7 @@
  * 
  */
 
-package org.benchmarks.springboot;
+package org.tussleframework.springboot;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

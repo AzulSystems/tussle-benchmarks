@@ -97,7 +97,6 @@ springboot_tusla() {
     local tus_spring_jar
     cat<<EOF > "${bench_dir}/config.yaml"
 reportDir: ${RESULTS_DIR}/report
-slaConfig: ${SLA_CONFIG}
 startingWarmupTime: ${startingWarmupTime}
 warmupTime: ${warmupTime}
 retriesMax: ${retriesMax}
@@ -107,6 +106,7 @@ highBound: ${highBound}
 startingRatePercent: ${startingRatePercent}
 finishingRatePercent: ${finishingRatePercent}
 ratePercentStep: ${ratePercentStep}
+slaConfig: ${SLA_CONFIG}
 EOF
     if [[ "${SERVER_HOST}" == builtin ]]
     then

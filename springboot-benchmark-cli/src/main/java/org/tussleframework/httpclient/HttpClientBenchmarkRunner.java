@@ -30,14 +30,14 @@
  * 
  */
 
-package org.benchmarks.springboot;
+package org.tussleframework.httpclient;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.tussleframework.BasicRunner;
+import org.tussleframework.tools.LoggerTool;
 
-@SpringBootApplication
-public class HelloWorldApp {
+public class HttpClientBenchmarkRunner {
     public static void main(String[] args) {
-        SpringApplication.run(HelloWorldApp.class, args);
-    }
+        LoggerTool.init("benchmark");
+        new BasicRunner().run(HttpClientBenchmark.class, args);
+   }
 }

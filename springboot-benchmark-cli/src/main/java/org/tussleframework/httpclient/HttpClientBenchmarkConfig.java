@@ -30,14 +30,18 @@
  * 
  */
 
-package org.benchmarks.httpclient;
+package org.tussleframework.httpclient;
 
-import org.benchmarks.BasicRunner;
-import org.benchmarks.tools.LoggerTool;
+import org.tussleframework.WlConfig;
 
-public class HttpClientBenchmarkRunner {
-    public static void main(String[] args) {
-        LoggerTool.init("benchmark");
-        new BasicRunner().run(HttpClientBenchmark.class, args);
-   }
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+@Data
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+public class HttpClientBenchmarkConfig extends WlConfig {
+    public String targetURI = "http://localhost:8080";
+    public int expectedHttpCode = 200;
 }

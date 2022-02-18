@@ -30,21 +30,14 @@
  * 
  */
 
-package org.benchmarks.springboot;
+package org.tussleframework.springboot;
 
-import java.util.Arrays;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import org.benchmarks.BasicRunner;
-import org.benchmarks.tools.LoggerTool;
-
-public class HelloWorldBenchRunner {
+@SpringBootApplication
+public class HelloWorldApp {
     public static void main(String[] args) {
-        if (args.length > 0 && (args[0].equals("-server") || args[0].equals("--server"))) {
-            args = Arrays.copyOfRange(args, 1, args.length);
-            HelloWorldApp.main(args);
-        } else {
-            LoggerTool.init("benchmark");
-            new BasicRunner().run(HelloWorldBench.class, args);
-        }
+        SpringApplication.run(HelloWorldApp.class, args);
     }
 }

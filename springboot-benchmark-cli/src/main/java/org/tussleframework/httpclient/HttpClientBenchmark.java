@@ -30,7 +30,7 @@
  * 
  */
 
-package org.benchmarks.httpclient;
+package org.tussleframework.httpclient;
 
 import java.net.URI;
 
@@ -38,9 +38,9 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.benchmarks.RunnableWithError;
-import org.benchmarks.WlBenchmark;
-import org.benchmarks.WlConfig;
+import org.tussleframework.RunnableWithError;
+import org.tussleframework.WlBenchmark;
+import org.tussleframework.WlConfig;
 
 public class HttpClientBenchmark extends WlBenchmark {
 

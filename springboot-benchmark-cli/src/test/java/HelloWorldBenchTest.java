@@ -32,11 +32,11 @@
 
 import static org.junit.Assert.fail;
 
-import org.benchmarks.BenchmarkConfig;
-import org.benchmarks.httpclient.HttpClientBenchmark;
+import org.tussleframework.BenchmarkConfig;
 import org.junit.Test;
+import org.tussleframework.httpclient.HttpClientBenchmark;
 
-import static org.benchmarks.tools.FormatTool.*;
+import static org.tussleframework.tools.FormatTool.*;
 
 public class HelloWorldBenchTest {
 

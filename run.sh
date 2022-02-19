@@ -95,7 +95,10 @@ springboot_tusla() {
     local java_home=${JAVA_HOME}
     local java_opts=${JAVA_OPTS}
     local tus_spring_jar
-    cat<<EOF > "${bench_dir}/config.yaml"
+    local stepRater=false
+    if [[ "${stepRater}" == true ]]
+    then
+        cat<<EOF > "${bench_dir}/config.yaml"
 reportDir: ${RESULTS_DIR}/report
 startingWarmupTime: ${startingWarmupTime}
 warmupTime: ${warmupTime}
@@ -108,6 +111,14 @@ finishingRatePercent: ${finishingRatePercent}
 ratePercentStep: ${ratePercentStep}
 slaConfig: ${SLA_CONFIG}
 EOF
+    else
+        cat<<EOF > "${bench_dir}/config.yaml"
+reportDir: ${RESULTS_DIR}/report
+warmupTime: ${warmupTime}
+runTime: ${t}
+threads: ${threads}
+EOF
+    fi
     if [[ "${SERVER_HOST}" == builtin ]]
     then
         tus_spring_jar=${BASE_DIR}/lib/springboot-benchmark-app-${TUSLA_VERSION}.jar

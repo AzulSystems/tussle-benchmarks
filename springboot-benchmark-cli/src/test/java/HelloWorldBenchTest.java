@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Azul Systems
+ * Copyright (c) 2021-2022, Azul Systems
  * 
  * All rights reserved.
  * 
@@ -32,55 +32,32 @@
 
 import static org.junit.Assert.fail;
 
-import org.tussleframework.BenchmarkConfig;
 import org.junit.Test;
 import org.tussleframework.httpclient.HttpClientBenchmark;
-
-import static org.tussleframework.tools.FormatTool.*;
+import org.tussleframework.runners.BasicRunner;
+import org.tussleframework.tools.LoggerTool;
 
 public class HelloWorldBenchTest {
 
-    static final String SLAs = "[[50, 1, 10000], [90, 2, 20000], [99, 10, 30000]]";
+    {
+        LoggerTool.init("", "java.util.logging.ConsoleHandler");
+    }
 
-    static final String benchArgs1[] = {
-            "-s",
-            "histogramsDir: results1/histograms\n" +
-            "reportDir: results1/report\n" +
-            "slaConfig: " + SLAs + "\n" +
-            "startingWarmupTime: 10\n" +
-            "warmupTime: 2\n" +
-            "time: 10\n" +
-            "threads: 4\n" +
-            "highBound: 10000\n" +
-            "startingRatePercent: 50\n" +
-            "finishingRatePercent: 100\n" +
-            "retriesMax: 0\n" +
-            "ratePercentStep: 50\n"
+    static final String SLAs = "[[50, 1, 10000], [90, 2, 20000], [99, 10, 30000]]";
+    
+    static final String[] runArgs = {
+            "warmupTime=5",
+            "runTime=20"
     };
 
-    static final String benchArgs2[] = {
-            "-s",
-            "histogramsDir: results/histograms\n" +
-            "reportDir: results/report\n" +
-            "slaConfig: " + SLAs + "\n" +
-            "startingWarmupTime: 60\n" +
-            "warmupTime: 20\n" +
-            "time: 40\n" +
-            "threads: 4\n" +
-            "highBound: 10000\n" +
-            "startingRatePercent: 20\n" +
-            "finishingRatePercent: 110\n" +
-            "retriesMax: 2\n" +
-            "ratePercentStep: 5\n"
+    static final String[] benchArgs = {
+            "threads=4"
     };
 
     @Test
     public void testHttpCLient() {
-        HttpClientBenchmark b = new HttpClientBenchmark();
         try {
-            b.init(benchArgs1);
-            BenchmarkConfig c = b.getConfig();
-            b.run(parseValue(c.getTargetRate()), parseTimeLength(c.getWarmupTime()), parseTimeLength(c.getRunTime()), null);
+            new BasicRunner(runArgs).run(new HttpClientBenchmark(benchArgs));
         } catch (Exception e) {
             e.printStackTrace();
             fail("failed");

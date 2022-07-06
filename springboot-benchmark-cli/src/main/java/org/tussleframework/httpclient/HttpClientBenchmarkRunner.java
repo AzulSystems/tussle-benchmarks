@@ -32,12 +32,17 @@
 
 package org.tussleframework.httpclient;
 
-import org.tussleframework.BasicRunner;
+import org.tussleframework.TussleException;
+import org.tussleframework.runners.BasicRunner;
 import org.tussleframework.tools.LoggerTool;
 
 public class HttpClientBenchmarkRunner {
     public static void main(String[] args) {
         LoggerTool.init("benchmark");
-        new BasicRunner().run(HttpClientBenchmark.class, args);
+        try {
+            new BasicRunner().run(new HttpClientBenchmark(args));
+        } catch (TussleException e) {
+            e.printStackTrace();
+        }
    }
 }

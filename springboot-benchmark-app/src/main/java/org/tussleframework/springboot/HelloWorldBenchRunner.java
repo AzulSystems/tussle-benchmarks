@@ -34,7 +34,9 @@ package org.tussleframework.springboot;
 
 import java.util.Arrays;
 
-import org.tussleframework.BasicRunner;
+import org.tussleframework.Run;
+import org.tussleframework.TussleException;
+import org.tussleframework.runners.BasicRunner;
 import org.tussleframework.tools.LoggerTool;
 
 public class HelloWorldBenchRunner {
@@ -44,7 +46,11 @@ public class HelloWorldBenchRunner {
             HelloWorldApp.main(args);
         } else {
             LoggerTool.init("benchmark");
-            new BasicRunner().run(HelloWorldBench.class, args);
+            try {
+                Run.run(new HelloWorldBench(), new BasicRunner(), args);
+            } catch (TussleException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

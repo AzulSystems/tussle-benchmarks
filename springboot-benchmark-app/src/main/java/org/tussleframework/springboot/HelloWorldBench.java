@@ -34,6 +34,7 @@ package org.tussleframework.springboot;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.tussleframework.TussleException;
 import org.tussleframework.httpclient.HttpClientBenchmark;
 
 public class HelloWorldBench extends HttpClientBenchmark {
@@ -41,9 +42,16 @@ public class HelloWorldBench extends HttpClientBenchmark {
     private static final java.util.logging.Logger log = java.util.logging.Logger.getGlobal();
 
     private ConfigurableApplicationContext applicationContext;
+    
+    public HelloWorldBench() {
+    }
+
+    public HelloWorldBench(String[] args) throws TussleException {
+        init(args);
+    }
 
     @Override
-    public void init(String[] args) throws Exception {
+    public void init(String[] args) throws TussleException {
         super.init(args);
         applicationContext = SpringApplication.run(HelloWorldApp.class);
     }

@@ -39,6 +39,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.tussleframework.RunnableWithError;
+import org.tussleframework.TussleException;
 import org.tussleframework.WlBenchmark;
 import org.tussleframework.WlConfig;
 
@@ -47,9 +48,16 @@ public class HttpClientBenchmark extends WlBenchmark {
     private CloseableHttpClient httpClient;
     private URI targetURI;
     private int expectedHttpCode;
+    
+    public HttpClientBenchmark() {
+    }
+
+    public HttpClientBenchmark(String[] args) throws TussleException {
+        init(args);
+    }
 
     @Override
-    public void init(String[] args) throws Exception {
+    public void init(String[] args) throws TussleException {
         super.init(args);
         httpClient = HttpClientBuilder.create().build();
         HttpClientBenchmarkConfig config = (HttpClientBenchmarkConfig) this.config;

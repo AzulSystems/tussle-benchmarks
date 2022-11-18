@@ -81,10 +81,8 @@ JAVA_VERSION=${JAVA_VERSION:-}
 JAVA_TYPE=${JAVA_TYPE:-}
 CLIENT_JAVA_HOME=${CLIENT_JAVA_HOME:-$(get_user_java)}
 CLIENT_JAVA_OPTS=${CLIENT_JAVA_OPTS:-"-Xmx1g -Xms1g"}
-#JAVA_OPTS_GC_LOG="-XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -Xloggc:__DIR__/__NAME___%t.%p_gc.log"
 JAVA_OPTS_GC_LOG="-XX:+PrintGCDetails -Xloggc:__DIR__/__NAME___%t.%p_gc.log"
-JAVA_OPTS_GC_LOG11="-XX:+PrintGCDetails -Xloggc:__DIR__/__NAME___%t.%p_gc.log -Xlog:gc::utctime -XX:NativeMemoryTracking=summary"
-JAVA_OPTS_COMP_LOG="-XX:+PrintCompilation -XX:+TraceDeoptimization -XX:+PrintCompilationStats -XX:+PrintCompileDateStamps -XX:-DisplayVMOutput -XX:+LogVMOutput -XX:LogFile=__DIR__/__NAME___%t.%p_comp.log"
+JAVA_OPTS_COMP_LOG="-XX:+PrintCompilation -XX:+TraceDeoptimization -XX:+PrintCompilationStats -XX:+PrintDeoptimizationStatistics -XX:+TraceClassLinking -XX:+TraceClassLoading -XX:+PrintCompileDateStamps -XX:-DisplayVMOutput -XX:+LogVMOutput -XX:LogFile=__DIR__/__NAME___%t.%p_comp.log"
 JAVA_OPTS_CMS="-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly -XX:+AlwaysPreTouch"
 JAVA_OPTS_G1="-XX:+UseG1GC"
 JAVA_OPTS_FALCON="-XX:+UseFalcon -XX:-UseC2"
@@ -112,45 +110,57 @@ REMOTE_UTILS_CMD=${REMOTE_UTILS_CMD:-UTILS_CMD}
 SSH_USER=${SSH_USER:-${USER}}
 SSH_EXT_ARGS=${SSH_EXT_ARGS:-"-o StrictHostKeyChecking=no -o PasswordAuthentication=no"}
 SSH_KEY=${SSH_KEY:-""}
-SSH_HIDE_BANNER=${SSH_HIDE_BANNER:-false}
+SSH_HIDE_BANNER=${SSH_HIDE_BANNER:-true}
 
 ################################################
 # basic functions
 #
 
 is_true() {
-    if [[ "${1}" == 1 || "${1}" == true || "${1}" == TRUE || "${1}" == yes || "${1}" == YES || "${1}" == on || "${1}" == ON ]]
-    then
-        return 0
-    else
-        return 1
-    fi
+    [[ "${1}" == 1 || "${1}" == true || "${1}" == TRUE || "${1}" == yes || "${1}" == YES || "${1}" == on || "${1}" == ON ]]
 }
 
 has_item() {
     local item=${1,,}
     local list=,${2,,},
-    if [[ "${list}" == ,all, || "${list}" == *,${item},* ]]
-    then
-        return 0
-    else
-        return 1
-    fi
+    [[ "${list}" == *,-${item},* ]] && return 1
+    [[ "${list}" == ,all, || "${list}" == *,${item},* ]] && return 0
+    return 1
 }
 
+has_item_exact() {
+    local item=${1,,}
+    local list=,${2,,},
+    [[ "${list}" == *,-${item},* ]] && return 1
+    [[ "${list}" == *,${item},* ]] && return 0
+    return 1
+}
+
+#
+# prints seconds since 1970-01-01 00:00:00 UTC
+#
 sys_time() {
     date +%s
 }
 
+#
+# prints in format YYYY-MM-DD hh:mm:ss,ms,UTC
+#
 get_stamp() {
     local p=$(date -u "+%Y-%m-%d %H:%M:%S,%N")
     echo ${p::23},UTC
 }
 
+#
+# converts YYYY-MM-DD hh:mm:ss,ms,UTC -> YYYY-MM-DDThh:mm:ss
+#
 iso_time() {
     echo "$@" | sed "s|,.*||; s|\[||; s| |T|"
 }
 
+#
+# iso_time test: 2022-10-14 09:01:18,477,UTC -> 2022-10-14T09:01:18
+#
 iso_time_test() {
     local p=$(get_stamp)
     echo "$p -> $(iso_time $p)"
@@ -634,17 +644,30 @@ install_tools() {
     sync_dirs "${UTILS_SCRIPT_DIR}" "${1}"
 }
 
+find_file() {
+    local dir=$1
+    local f=$2
+    logd "[find_file] find -L '${dir}' -name '${f}'..."
+    local res=$(find -L "${dir}" -name "${f}")
+    logd "[find_file] Found '${res}'..."
+    echo "${res}"
+}
+
 find_artifact() {
     local name=${1}
     local dir=${2}
     local archive
-    [[ -f "${archive}" ]] || archive=$(find "${src}" -name "*${name}-bin.tar.gz")
-    [[ -f "${archive}" ]] || archive=$(find "${src}" -name "*${name}.tar.gz")
-    [[ -f "${archive}" ]] || archive=$(find "${src}" -name "*${name}.tgz")
-    [[ -f "${archive}" ]] || archive=$(find "${src}" -name "*${name}-*bin.tar.gz")
-    [[ -f "${archive}" ]] || archive=$(find "${src}" -name "*${name}-*.tar.gz")
-    [[ -f "${archive}" ]] || archive=$(find "${src}" -name "*${name}-*.tgz")
-    [[ -f "${archive}" ]] || archive=$(find "${src}" -name "*${name}.zip")
+    [[ -f "${archive}" ]] || archive=$(find_file "${src}" "*${name}-bin.tar.gz")
+    [[ -f "${archive}" ]] || archive=$(find_file "${src}" "*${name}_bin.tar.gz")
+    [[ -f "${archive}" ]] || archive=$(find_file "${src}" "*${name}.tar.gz")
+    [[ -f "${archive}" ]] || archive=$(find_file "${src}" "*${name}.tgz")
+    [[ -f "${archive}" ]] || archive=$(find_file "${src}" "*${name}-*bin.tar.gz")
+    [[ -f "${archive}" ]] || archive=$(find_file "${src}" "*${name}_*bin.tar.gz")
+    [[ -f "${archive}" ]] || archive=$(find_file "${src}" "*${name}-*.tar.gz")
+    [[ -f "${archive}" ]] || archive=$(find_file "${src}" "*${name}_*.tar.gz")
+    [[ -f "${archive}" ]] || archive=$(find_file "${src}" "*${name}-*.tgz")
+    [[ -f "${archive}" ]] || archive=$(find_file "${src}" "*${name}_*.tgz")
+    [[ -f "${archive}" ]] || archive=$(find_file "${src}" "*${name}.zip")
     echo "${archive}"
 }
 
@@ -669,85 +692,91 @@ install_artifact() {
     local force_remove=${4:-true}
     if [[ -z "${name}" ]]
     then
-        log "install_artifact: Missing artifact name!"
+        log "[install_artifact] Missing artifact name!"
         return 1
     fi
     if [[ -z "${src}" ]]
     then
-        log "install_artifact: Missing artifact source!"
+        log "[install_artifact] Missing artifact source!"
         return 1
     fi
     if [[ -z "${install_dir}" ]]
     then
-        log "install_artifact: Missing target install dir!"
+        log "[install_artifact] Missing target install dir!"
         return 1
     fi
     local app_home="${install_dir}/${name}"
     if [[ -d "${app_home}" ]]
     then
-        if is_true "${force_remove}"
+        local check=$(find "${app_home}" -type d -empty)
+        if [[ -n "${check}" ]]
         then
-            log "install_artifact: Cleaning existing application dir: ${app_home}..."
+            log "[install_artifact] Existing application dir is empty: ${app_home}"
+        elif is_true "${force_remove}"
+        then
+            log "[install_artifact] Cleaning existing application dir: ${app_home}..."
             rm -fr "${app_home}" || return 1
         elif ${distr}
         then
             if [[ -f "${app_home}/INSTALLED" ]]
             then
-                log "install_artifact: Using existing application dir '${app_home}' (installed previously)"
+                log "[install_artifact] Using existing application dir '${app_home}' (installed previously)"
                 return 0
             else
-                log "install_artifact: Cleaning existing application dir '${app_home}' (installed previously)"
+                log "[install_artifact] Cleaning existing application dir '${app_home}' (installed previously)"
                 rm -fr "${app_home}" || return 1
             fi
         else
-            log "install_artifact: Using existing application dir '${app_home}'"
+            log "[install_artifact] Using existing application dir '${app_home}'"
             return 0
         fi
     fi
     if [[ -d "${src}" ]]
     then
         ### from dir ###
-        log "install_artifact: Looking for artifact in the dist dir '${src}'..."
+        log "[install_artifact] Looking for artifact '${name}' in the dist dir '${src}'..."
         local archive=$(find_artifact "${name}" "${src}")
         if [[ -f "${archive}" ]]
         then
             src="${archive}"
         else
-            log "install_artifact: Failed to find artifact '${name}' in the dist dir '${src}'!"
+            log "[install_artifact] Failed to find artifact '${name}' in the dist dir '${src}'!"
             return 1
         fi
     elif [[ "${src}" == http* ]]
     then
         ### from url ###
-        log "install_artifact: Downloading artifact from url '${src}'..."
+        log "[install_artifact] Downloading artifact from url '${src}'..."
         mkdir -p "${install_dir}" || return 1
         wget -q -c "${src}" --directory-prefix="${install_dir}" || return 1
         local dl_name=${src/*\//}
         src="${install_dir}/${dl_name}"
     else
         ### from file ###
-        log "install_artifact: artifact from file '${src}'..."
+        log "[install_artifact] artifact from file '${src}'..."
     fi
     ### from file ###
     if [[ "${src}" == *.zip ]]
     then
-        log "install_artifact: Installing '${name}' from zip arch '${src}' to the app dir '${app_home}'"
+        log "[install_artifact] Installing '${name}' from zip arch '${src}' to the app dir '${app_home}'"
         mkdir -p "${app_home}" || return 1
         if unzip "${src}" -d "${app_home}"
         then
             touch "${app_home}/INSTALLED"
             return 0
         fi
-        log "install_artifact: Failed unzip '${src}'"
+        rmdir -vrf "${app_home}"
+        log "[install_artifact] Failed unzip '${src}'"
     else
-        log "install_artifact: Installing '${name}' from tarball '${src}' to the app dir '${app_home}'"
+        log "[install_artifact] Installing '${name}' from tarball '${src}' to the app dir '${app_home}'"
         mkdir -p "${app_home}" || return 1
         if tar -xzf "${src}" -C "${app_home}" --strip-components=1
         then
             touch "${app_home}/INSTALLED"
             return 0
         fi
-        log "install_artifact: Failed untar '${src}'"
+        rm -vrf "${app_home}"
+        log "[install_artifact] Failed untar '${src}'"
     fi
     return 1
 }
@@ -905,30 +934,54 @@ drop_caches() {
 }
 
 find_process() {
-    local pars="-u $(whoami)"
-    local p
+    local quiet=false
+    if [[ "${1}" == -q ]]
+    then
+        quiet=true
+        shift
+    fi
+    local pars="-u $(whoami) -a"
     while [[ "${1}" == -* ]]
     do
         pars="${pars} ${1}"
         shift
     done
     local args="${@}"
+    ${quiet} || log "[find_process] pgrep ${pars} '${args}' ..."
+    local procs=$(pgrep ${pars} "${args}")
+    local proc
+    local pid
+    local pids=()
+    local this_cmd=$(basename "${UTILS_CMD}")
+    while read proc
+    do
+        [[ -z "${proc}" || "${proc}" == *"${this_cmd}"* ]] && continue
+        pid=(${proc})
+        [[ "${pid}" == $$ ]] && continue
+        ${quiet} || log "[find_process] found: ${proc} (pid: ${pid})"
+        epids+=(${pid})
+    done <<< ${procs}
+    echo ${epids[@]}
+    [[ -n "${epids[@]}" ]]
+}
+
+list_process() {
+    local pars="-u $(whoami) -a"
+    while [[ "${1}" == -* ]]
+    do
+        pars="${pars} ${1}"
+        shift
+    done
+    local args="${@}"
+    log "[list_process] pgrep ${pars} '${args}' ..."
     pgrep ${pars} "${args}"
 }
 
 check_process() {
-    local pars="-u $(whoami)"
-    local p
-    while [[ "${1}" == -* ]]
-    do
-        pars="${pars} ${1}"
-        shift
-    done
-    local args="${@}"
-    log "pgrep args: ${pars} '${args}'"
-    if p=$(pgrep ${pars} "${args}")
+    local procs=$(find_process "${@}")
+    if [[ -n "${procs}" ]]
     then
-        log "Found process: ${pars} '${args}' - ${p}..."
+        log "[check_process] found process(es): ${procs[@]}"
         return 0
     else
         return 1
@@ -936,42 +989,43 @@ check_process() {
 }
 
 stop_process() {
-    local pars="-u $(whoami)"
-    local p
-    while [[ "${1}" == -* ]]
-    do
-        pars="${pars} ${1}"
-        shift
-    done
-    local args="${@}"
-    log "pgrep args: ${pars} '${args}'"
-    if p=$(pgrep ${pars} "${args}")
+    local procs
+    if procs=$(find_process "${@}")
     then
-        log "Killing ${pars} '${args}' - ${p}..."
-        pkill ${pars} "${args}"
+        log "[stop_process] killing ${procs} ..."
+        kill ${procs}
+    else
+        log "[stop_process] nothing to kill for '${@}'"
+        return
     fi
     for (( i = 0; i < 30; i++ ))
     do
-        p=$(pgrep ${pars} "${args}") || break
-        sleep 1
+        if procs=$(find_process -q "${@}")
+        then
+            sleep 1
+        else
+            return
+        fi
     done
-    if p=$(pgrep ${pars} "${args}")
+    if procs=$(find_process "${@}")
     then
-        log "Force killing (--signal 9) ${pars} '${args}' - ${p}..."
-        pkill -9 ${pars} "${args}"
+        log "[stop_process] force killing ${procs} ..."
+        pkill -9 ${procs}
         for (( i = 0; i < 30; i++ ))
         do
-            if p=$(pgrep ${pars} "${args}")
+            if procs=$(find_process -q "${@}")
             then
                 sleep 1
             else
                 break
             fi
         done
+    else
+        return
     fi
-    if p=$(pgrep ${pars} "${args}")
+    if procs=$(find_process -q "${@}")
     then
-        log "WARNING: Process(es) still alive ${pars} '${args}' - ${p}..."
+        log "[stop_process] WARNING: Process(es) still alive ${procs} ..."
     fi
 }
 
@@ -1030,7 +1084,26 @@ start_top() {
         top -i -c -b -d ${delay}
         } &> "${output}" &
     fi
-    log "Started top"
+    log "Started top (pid: $!, code: $?)"
+}
+
+start_top_threads() {
+    has_item top_threads "${USE_MONITORS}" || return
+    local output=${1:-top_threads.log}
+    local hname=${2:-${HOSTNAME}}
+    local delay=5
+    local start=$(get_stamp)
+    log "Starting top with threads..."
+    {
+    echo "DELAY: ${delay}"
+    echo "START: ${start}"
+    echo "HOST: ${hname}"
+    echo
+    stdbuf -oL top -H -b -d ${delay} | grep -v "disabled[SR] 0\.0" | \
+        stdbuf -oL awk '{ if ($9 != "0.0" || $1 == "%Cpu(s):") print $0 }' | \
+        stdbuf -oL sed 's| *$||' 
+    } &> "${output}" &
+    log "Started top with threads (pid: $!, code: $?)"
 }
 
 start_mpstat() {
@@ -1066,8 +1139,19 @@ fork_monitor() {
     shift
     local monitor=$(first_file "${sname}" "${sname}.sh" "${UTILS_SCRIPT_DIR}/${sname}" "${UTILS_SCRIPT_DIR}/${sname}.sh")
     log "Starting ${sname} - ${monitor} (${@})..."
-    bash "${monitor}" "${delay}" "${hname}" "${@}" &> "${output}" &
-    log "Started ${sname} - ${monitor}: $?"
+    "${monitor}" "${delay}" "${hname}" "${@}" &> "${output}" &
+    local pid=$!
+    local res=$?
+    sleep 1
+    if kill -0 ${pid} &> /dev/null
+    then
+        log "Started ${sname} - ${monitor} (pid: ${pid}, code: ${res})"
+    else
+        wait ${pid}
+        res=$?
+        log "Failed to start ${sname} - ${monitor} (pid: ${pid}, code: ${res})"
+    fi
+    return $res
 }
 
 start_custom_script() {
@@ -1077,7 +1161,7 @@ start_custom_script() {
     p=${p%.*}
     log "Starting custom script: ${CUSTOM_SCRIPT}..."
     "${CUSTOM_SCRIPT}" &> "${1}/${p}.log" &
-    log "Started custom script: $?"
+    log "Started custom script: $! - $?"
 }
 
 stop_custom_script() {
@@ -1086,7 +1170,7 @@ stop_custom_script() {
 }
 
 check_monitors() {
-    if check_process top || \
+    if check_process -f "top -i -c -b -d" || \
        check_process sar || \
        check_process -f ipstats.sh
     then
@@ -1097,21 +1181,26 @@ check_monitors() {
 }
 
 start_monitor_tools() {
-	local out_dir=${1}
+	local out_dir=${1:-.}
 	mkdir -p "${out_dir}" || return 1
 	print_sys_info > "${out_dir}/system_info1.log"
+	log
+	log "Starting monitor tools ..."
     start_top "${out_dir}/top.log"
+    start_top_threads "${out_dir}/top_threads.log"
     start_mpstat "${out_dir}/mpstat.log"
     start_ipstats "${out_dir}/ipstat.log"
     start_vmstats "${out_dir}/vmstats.log"
     start_diskstats "${out_dir}/diskstat.log"
     start_diskspace "${out_dir}/diskspace.log"
     start_custom_script "${out_dir}"
+    log
 }
 
 stop_monitor_tools() {
 	local out_dir=${1}
-    has_item top "${USE_MONITORS}" && stop_process top
+    has_item top "${USE_MONITORS}" && stop_process -f "top -i -c -b -d" 
+    has_item top_threads "${USE_MONITORS}" && stop_process -f "top -H -b -d"
     has_item mpstat "${USE_MONITORS}" && stop_process mpstat
     has_item ipstats "${USE_MONITORS}" && stop_process -f ipstats.sh
     has_item vmstats "${USE_MONITORS}" && stop_process -f vmstats.sh
@@ -1124,7 +1213,7 @@ wait_for_port() {
     local port=${1}
     local name=${2}
     local times_cnt=0
-    local times_max=${3:-20}
+    local times_max=${3:-30}
     log "Waiting for ${name}..."
     while ! netstat -lnt | grep -q ${port}
     do
@@ -1134,8 +1223,8 @@ wait_for_port() {
             log "Failed to start ${name}!"
             return 1
         fi
-        log "Waiting for ${name} on port ${port} (${times_cnt} retry of 10)"
-        sleep 2
+        log "Waiting for ${name} on port ${port} (${times_cnt} retry of ${times_max})"
+        sleep 1
     done
     log "${name} started on port ${port}"
 }
@@ -1930,13 +2019,7 @@ preprocess_java_opts() {
     local script_dir=${5:-${UTILS_SCRIPT_DIR}}
     local hargs
     [[ -n "${JHICCUP_ARGS}" ]] && hargs="=${JHICCUP_ARGS}"
-    local gcargs
-##    if (( JAVA_VERSION > 8 )) && [[ "${JAVA_TYPE}" != zing* ]]
-##    then
-##        gcargs=${JAVA_OPTS_GC_LOG11}
-##    else
-        gcargs=${JAVA_OPTS_GC_LOG}
-##    fi
+    local gcargs=${JAVA_OPTS_GC_LOG}
     java_opts=$(echo "${java_opts}" | sed "s|__G1__|${JAVA_OPTS_G1}|g;  s|__CMS__|${JAVA_OPTS_CMS}|g;  s|__FALCON__|${JAVA_OPTS_FALCON}|; s|__C2__|${JAVA_OPTS_C2}|; ")
     java_opts=$(echo "${java_opts}" | sed "s|__LOGGC__|${gcargs}|g;  s|__LOGCOMP__|${JAVA_OPTS_COMP_LOG}|g; ")
     java_opts=$(echo "${java_opts}" | sed "s|__GC_LOG__|__DIR__/__NAME___%t.%p_gc.log|g")
@@ -1978,15 +2061,15 @@ set_property() {
     local currValue=$(grep -- "^${prop}${sep}\|# ${prop}${sep}" "${file}")
     if [[ -z "${currValue}" ]]
     then
-        log "set_property: appending '${prop}${sep}${value}'"
+        log "[set_property] appending '${prop}${sep}${value}'"
         echo >> "${file}"
         echo "$prop${sep}$value" >> "${file}"
     elif [[ "$currValue" == "# "* ]]
     then
-        log "set_property: uncommenting '${currValue}' -> '${prop}${sep}${value}'"
+        log "[set_property] uncommenting '${currValue}' -> '${prop}${sep}${value}'"
         sed --in-place "s|# \(\b${prop}\b\)${sep}.*|\1${sep}${value}|" "${file}"
     else
-        log "set_property: changing '${currValue}' -> '${prop}${sep}${value}'"
+        log "[set_property] changing '${currValue}' -> '${prop}${sep}${value}'"
         sed --in-place "s|\(.*\b${prop}\b\)${sep}.*|\1${sep}${value}|" "${file}"
     fi
 }
@@ -2057,6 +2140,26 @@ test_errok() {
 
 test_hostname() {
     log ${HOSTNAME}
+}
+
+test_true() {
+    echo "is_true $1"
+    is_true "$1"
+    echo $?
+}
+
+test_bool() {
+echo "[[ a == b ]]"
+[[ a == b ]]
+echo $?
+echo "[[ a == a ]]"
+[[ a == a ]]
+echo $?
+test_true 
+test_true false
+test_true true
+test_true 1
+test_true 0
 }
 
 if [[ "${BASH_SOURCE}" == "${0}" ]]

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Azul Systems
+ * Copyright (c) 2021-2022, Azul Systems
  * 
  * All rights reserved.
  * 
@@ -32,17 +32,12 @@
 
 package org.tussleframework.httpclient;
 
-import org.tussleframework.TussleException;
-import org.tussleframework.runners.BasicRunner;
+import org.tussleframework.Run;
 import org.tussleframework.tools.LoggerTool;
 
 public class HttpClientBenchmarkRunner {
     public static void main(String[] args) {
         LoggerTool.init("benchmark");
-        try {
-            new BasicRunner().run(new HttpClientBenchmark(args));
-        } catch (TussleException e) {
-            e.printStackTrace();
-        }
+        Run.run(new HttpClientBenchmark(), args);
    }
 }

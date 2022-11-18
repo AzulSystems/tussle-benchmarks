@@ -45,8 +45,7 @@ make_sb() {(
 )}
 
 make_cli() {(
-#    bash "${_BASE_DIR}/../tussle-framework/build.sh" || exit 1
-    cd ${_BASE_DIR}/springboot-benchmark-cli || exit 1
+    cd ${_BASE_DIR}/httpclient-benchmark-cli || exit 1
     echo "Building $(pwd)..."
     mvn clean 
     mvn package -DskipTests && \

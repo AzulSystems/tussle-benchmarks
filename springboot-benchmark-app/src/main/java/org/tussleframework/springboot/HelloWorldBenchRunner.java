@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Azul Systems
+ * Copyright (c) 2021-2022, Azul Systems
  * 
  * All rights reserved.
  * 
@@ -35,8 +35,6 @@ package org.tussleframework.springboot;
 import java.util.Arrays;
 
 import org.tussleframework.Run;
-import org.tussleframework.TussleException;
-import org.tussleframework.runners.BasicRunner;
 import org.tussleframework.tools.LoggerTool;
 
 public class HelloWorldBenchRunner {
@@ -46,11 +44,7 @@ public class HelloWorldBenchRunner {
             HelloWorldApp.main(args);
         } else {
             LoggerTool.init("benchmark");
-            try {
-                Run.run(new HelloWorldBench(), new BasicRunner(), args);
-            } catch (TussleException e) {
-                e.printStackTrace();
-            }
+            Run.run(new HelloWorldBench(), args);
         }
     }
 }

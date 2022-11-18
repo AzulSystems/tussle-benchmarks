@@ -50,4 +50,4 @@ echo "START: ${START}"
 echo "HOST: ${HOST}"
 echo
 
-sar -d -p ${DELAY}
+sar -d -p ${DELAY} || exit 1

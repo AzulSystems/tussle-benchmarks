@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2018-2022 Azul Systems
+# Copyright (c) 2018-2023 Azul Systems
 #
 # All rights reserved.
 #
@@ -31,86 +31,19 @@
 #
 
 #
-# Common script utility methods v2.0
+# Common basic utility methods
 #
 
-#echo "BASH_SOURCE ${BASH_SOURCE[@]} -- ${0}"
+[[ "${DEBUG}" == true ]] && echo "BASH_SOURCE ${BASH_SOURCE[@]}"
+
 UTILS_SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE}") && pwd -P)
 UTILS_CMD=$(readlink -f "${BASH_SOURCE}")
 
 ################################################
-# Generic variables
+# basic constants
 #
-APPS_DIR=${APPS_DIR:-/localhome/__SSHUSER__}
-DATA_DIR=${DATA_DIR:-/localhome/__SSHUSER__}
-CLIENT_DIR=${CLIENT_DIR:-/localhome/__SSHUSER__}
-DIST_DIR=${DIST_DIR:-/home/$USER/dist}
-
-PAR=${PAR:-0}
-STAMP=${STAMP:-$(date -u '+%Y%m%d_%H%M%S')}
-RESULTS_DIR=${RESULTS_DIR:-"$(pwd)/results_$STAMP"}
-
-WAIT_TIME=${WAIT_TIME:-300}
-USE_MONITORS=${USE_MONITORS:-all}
-DROP_CACHES=${DROP_CACHES:-true}
-CLEAN_DEV_SHM=${CLEAN_DEV_SHM:-true}
-CLUSTER_NAME=${CLUSTER_NAME:-${BENCHMARK%-*}_test}
-
-HOSTNAME_CMD=${HOSTNAME_CMD:-"hostname -A"}
-HOSTNAME=$( ${HOSTNAME_CMD} )
-HOSTNAME=( ${HOSTNAME} )
-HOSTNAME=$(echo ${HOSTNAME})
-
-get_user_java() {
-    if [[ -f "${JAVA_HOME}"/bin/java ]]
-    then
-        echo "${JAVA_HOME}"
-    elif [[ -f ~/jdk_latest/bin/java ]]
-    then
-        echo ~/jdk_latest
-    elif [[ -f ~/ws/jdk_latest/bin/java ]]
-    then
-        echo ~/ws/jdk_latest
-    else
-        echo ""
-    fi
-}
-
-JAVA_HOME=${JAVA_HOME:-$(get_user_java)}
-JAVA_VERSION=${JAVA_VERSION:-}
-JAVA_TYPE=${JAVA_TYPE:-}
-CLIENT_JAVA_HOME=${CLIENT_JAVA_HOME:-$(get_user_java)}
-CLIENT_JAVA_OPTS=${CLIENT_JAVA_OPTS:-"-Xmx1g -Xms1g"}
-JAVA_OPTS_GC_LOG="-XX:+PrintGCDetails -Xloggc:__DIR__/__NAME___%t.%p_gc.log"
-JAVA_OPTS_COMP_LOG="-XX:+PrintCompilation -XX:+TraceDeoptimization -XX:+PrintCompilationStats -XX:+PrintDeoptimizationStatistics -XX:+TraceClassLinking -XX:+TraceClassLoading -XX:+PrintCompileDateStamps -XX:-DisplayVMOutput -XX:+LogVMOutput -XX:LogFile=__DIR__/__NAME___%t.%p_comp.log"
-JAVA_OPTS_CMS="-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly -XX:+AlwaysPreTouch"
-JAVA_OPTS_G1="-XX:+UseG1GC"
-JAVA_OPTS_FALCON="-XX:+UseFalcon -XX:-UseC2"
-JAVA_OPTS_C2="-XX:-UseFalcon -XX:+UseC2"
-RESET_INTERVAL=${RESET_INTERVAL:-300000}
-RESET_ITERATIONS=${RESET_ITERATIONS:-1000}
-JHICCUP_ARGS=${JHICCUP_ARGS:-"-l,__DIR__/hiccup___NAME__.%date.%pid.hlog"}
 
 TIME_FORMAT_Z="%Y%m%dT%H%M%SZ"
-LOG_PREF=""
-LOG_SEP="-------------------------------------------------------------------------------"
-SSH_SEP="_______________________________________________________________________________"
-APP_SEP="==============================================================================="
-PROP_SEP=": "
-
-NODES_WITH_PORTS=""
-NODES_IP=""
-NODES_IP_WITH_PORTS=""
-NUM_NODES=0
-
-ARGS=()
-NODE_OPTS=()
-REMOTE_UTILS_CMD=${REMOTE_UTILS_CMD:-UTILS_CMD}
-
-SSH_USER=${SSH_USER:-${USER}}
-SSH_EXT_ARGS=${SSH_EXT_ARGS:-"-o StrictHostKeyChecking=no -o PasswordAuthentication=no"}
-SSH_KEY=${SSH_KEY:-""}
-SSH_HIDE_BANNER=${SSH_HIDE_BANNER:-true}
 
 ################################################
 # basic functions
@@ -137,14 +70,14 @@ has_item_exact() {
 }
 
 #
-# prints seconds since 1970-01-01 00:00:00 UTC
+# prints current seconds number since 1970-01-01 00:00:00 UTC
 #
 sys_time() {
     date +%s
 }
 
 #
-# prints in format YYYY-MM-DD hh:mm:ss,ms,UTC
+# prints current time in the format YYYY-MM-DD hh:mm:ss,ms,UTC
 #
 get_stamp() {
     local p=$(date -u "+%Y-%m-%d %H:%M:%S,%N")
@@ -155,24 +88,111 @@ get_stamp() {
 # converts YYYY-MM-DD hh:mm:ss,ms,UTC -> YYYY-MM-DDThh:mm:ss
 #
 iso_time() {
-    echo "$@" | sed "s|,.*||; s|\[||; s| |T|"
+    echo "${@}" | sed 's|,.*||; s|\[||; s| |T|'
 }
 
 #
-# iso_time test: 2022-10-14 09:01:18,477,UTC -> 2022-10-14T09:01:18
+# converts YYYY-MM-DD hh:mm:ss,ms,UTC -> YYYYMMDDThhmmssZ
 #
-iso_time_test() {
-    local p=$(get_stamp)
-    echo "$p -> $(iso_time $p)"
+time_z() {
+    local t=$(echo "${@}" | sed 's|,.*||; s| |T|; s|[",:-]||g')
+    echo ${t}Z
 }
+
+get_stamp_z() {
+    time_z "$(get_stamp)"
+}
+
+################################################
+# Generic variables
+#
+APPS_DIR=${APPS_DIR:-/localhome/__SSHUSER__}
+DATA_DIR=${DATA_DIR:-/localhome/__SSHUSER__}
+CLIENT_DIR=${CLIENT_DIR:-/localhome/__SSHUSER__}
+DIST_DIR=${DIST_DIR:-/home/$USER/dist}
+
+PAR=${PAR:-0}
+START_TIME=$(get_stamp)
+STAMP=$(time_z $START_TIME)
+RESULTS_DIR=${RESULTS_DIR:-$PWD/results___STAMP_____RUN_NAME__}
+
+WAIT_TIME=${WAIT_TIME:-300}
+USE_MONITORS=${USE_MONITORS:-all}
+DROP_CACHES=${DROP_CACHES:-true}
+CLEAN_DEV_SHM=${CLEAN_DEV_SHM:-true}
+CLUSTER_NAME=${CLUSTER_NAME:-${BENCHMARK%-*}_test}
+
+HOSTNAME_CMD=${HOSTNAME_CMD:-"hostname -A"}
+HOSTNAME=$(${HOSTNAME_CMD})
+HOSTNAME=( ${HOSTNAME} )
+HOSTNAME=$(echo ${HOSTNAME})
+
+get_user_java() {
+    if [[ -f "${JAVA_HOME}"/bin/java ]]
+    then
+        echo "${JAVA_HOME}"
+    elif [[ -f ~/jdk_latest/bin/java ]]
+    then
+        echo ~/jdk_latest
+    elif [[ -f ~/ws/jdk_latest/bin/java ]]
+    then
+        echo ~/ws/jdk_latest
+    else
+        echo ""
+    fi
+}
+
+JAVA_HOME=${JAVA_HOME:-$(get_user_java)}
+JAVA_VERSION=${JAVA_VERSION:-}
+JAVA_TYPE=${JAVA_TYPE:-}
+CLIENT_JAVA_HOME=${CLIENT_JAVA_HOME:-$(get_user_java)}
+CLIENT_JAVA_OPTS=${CLIENT_JAVA_OPTS:-"-Xmx1g -Xms1g"}
+JAVA_OPTS_GC_LOG="-XX:+PrintGCDetails -Xloggc:__DIR__/__NAME___gc.log"
+JAVA_OPTS_GC_LOG_STAMP="-XX:+PrintGCDetails -Xloggc:__DIR__/__NAME___%t.%p_gc.log"
+JAVA_OPTS_COMP_LOG="-XX:+PrintCompilation -XX:+TraceDeoptimization -XX:+PrintCompilationStats -XX:+PrintDeoptimizationStatistics -XX:+TraceClassLinking -XX:+TraceClassLoading -XX:+PrintCompileDateStamps -XX:+LogVMOutput -XX:LogFile=__DIR__/__NAME___comp.log"
+JAVA_OPTS_COMP_LOG_STAMP="-XX:+PrintCompilation -XX:+TraceDeoptimization -XX:+PrintCompilationStats -XX:+PrintDeoptimizationStatistics -XX:+TraceClassLinking -XX:+TraceClassLoading -XX:+PrintCompileDateStamps -XX:+LogVMOutput -XX:LogFile=__DIR__/__NAME___%t.%p_comp.log"
+JAVA_OPTS_CMS="-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly -XX:+AlwaysPreTouch"
+JAVA_OPTS_G1="-XX:+UseG1GC"
+JAVA_OPTS_FALCON="-XX:+UseFalcon -XX:-UseC2"
+JAVA_OPTS_C2="-XX:-UseFalcon -XX:+UseC2"
+RESET_INTERVAL=${RESET_INTERVAL:-300000}
+RESET_ITERATIONS=${RESET_ITERATIONS:-1000}
+JHICCUP_ARGS=${JHICCUP_ARGS:-"-l,__DIR__/hiccup___NAME__.%date.%pid.hlog"}
+
+LOG_PREF=""
+LOG_SEP="-------------------------------------------------------------------------------"
+SSH_SEP="_______________________________________________________________________________"
+APP_SEP="==============================================================================="
+PROP_SEP=": "
+
+NODES_WITH_PORTS=""
+NODES_IP=""
+NODES_IP_WITH_PORTS=""
+NUM_NODES=0
+
+ARGS=()
+NODE_OPTS=()
+REMOTE_UTILS_CMD=${REMOTE_UTILS_CMD:-UTILS_CMD}
+
+SSH_USER=${SSH_USER:-${USER}}
+SSH_EXT_ARGS=${SSH_EXT_ARGS:-"-o StrictHostKeyChecking=no -o PasswordAuthentication=no"}
+SSH_KEY=${SSH_KEY:-""}
+SSH_HIDE_BANNER=${SSH_HIDE_BANNER:-true}
 
 log() {
     local p=
     echo "$(get_stamp) ${p}[${HOSTNAME}] [$$] ${LOG_PREF}${@}" >&2
 }
 
+logt() {
+    local stamp=$1
+    shift
+    local p=
+    echo "${stamp} ${p}[${HOSTNAME}] [$$] ${LOG_PREF}${@}" >&2
+}
+
 logd() {
-    is_true "${DEBUG}" && log "[DEBUG] $@"
+    is_true "${DEBUG}" && log "[DEBUG] ${@}"
 }
 
 log_sep() {
@@ -184,13 +204,35 @@ fail() {
     exit 1
 }
 
-logx() {
-    local pref=${1}
+logx_impl() {
+    local func=${1}
+    local pref=${2}
+    local max_lines=${3:-1000000}
+    local lines=0
     while IFS= read -r p
     do
-        [[ -n "${p}" ]] && \
-        log "${pref}${p}"
+        if [[ -n "${p}" ]]
+        then
+            if (( lines > max_lines ))
+            then
+                :
+            elif (( lines == max_lines ))
+            then
+                ${func} "${pref}...skipping output"
+            else
+                ${func} "${pref}${p}"
+            fi
+            (( lines++ ))
+        fi
     done
+}
+
+logx() {
+    logx_impl log "${@}"
+}
+
+logxd() {
+    logx_impl logd "${@}"
 }
 
 log_cmd() {
@@ -251,6 +293,7 @@ process_args() {
         (( i++ ))
         shift
     done
+    RESULTS_DIR=$(get_dir "${RESULTS_DIR}")
 }
 
 print_args() {
@@ -275,7 +318,7 @@ print_args() {
 }
 
 calc() {
-    [[ -n "$bc" ]] || return 1
+    [[ -n "${bc}" ]] || return 1
     local res=$(echo "${@}" | $bc)
     if echo ${res} | grep -q '\.'
     then
@@ -283,6 +326,45 @@ calc() {
     else
         echo ${res}
     fi
+}
+
+# 1k -> 1000
+# 24m -> 24000000
+parse_value() {
+    local value=${1,,}
+    local m=1
+    if [[ "${value}" == *k ]]
+    then
+        m=1000
+        value=${value%k}
+    elif [[ "${value}" == *m ]]
+    then
+        m=1000000
+        value=${value%m}
+    elif [[ "${value}" == *g ]]
+    then
+        m=1000000000
+        value=${value%g}
+    fi
+    echo $((value * m))
+}
+
+parse_time() {
+    local value=${1,,}
+    local m=1
+    if [[ "${value}" == *m ]]
+    then
+        m=60
+        value=${value%m}
+    elif [[ "${value}" == *h ]]
+    then
+        m=3600
+        value=${value%h}
+    elif [[ "${value}" == *s ]]
+    then
+        value=${value%s}
+    fi
+    echo $((value * m))
 }
 
 check_bc() {
@@ -313,6 +395,16 @@ first_file() {
     return 1
 }
 
+clean_dir() {
+    local dir=$1
+    if [[ -d "${dir}" ]]
+    then
+        logd "Cleaning files under directory: ${dir}/*"
+        rm -vfr "${dir}"/* 2>/dev/null
+        rm -vfr "${dir}"/.* 2>/dev/null
+    fi
+}
+
 mk_res_dir() {
     mkdir -p "${RESULTS_DIR}" || exit 1
     RESULTS_DIR=$(abs_dir "${RESULTS_DIR}")
@@ -320,6 +412,7 @@ mk_res_dir() {
 
 mkdir_w() {
     local dir=${1}
+    dir=${dir#localhost:}
     logd "mkdir_w '${dir}'"
     if [[ "${dir}" == *:* ]]
     then
@@ -376,6 +469,7 @@ ____________EOF
 
 du_w() {
     local dir=${1}
+    dir=${dir#localhost:}
     logd "[du_w] '${dir}'"
     if [[ "${dir}" == *:* ]]
     then
@@ -393,9 +487,11 @@ du_w() {
 }
 
 rsync_w() {
-    logd "[rsync_w] [$@]"
+    logd "[rsync_w] [${@}]"
     local dir1=${1}
     local dir2=${2}
+    dir1=${dir1#localhost:}
+    dir2=${dir2#localhost:}
     local ext_opts=${3}
     local ssh_args=${SSH_EXT_ARGS}
     [[  -n "${SSH_KEY}" ]] && ssh_args+=" -i ${SSH_KEY}"
@@ -425,7 +521,9 @@ rsync_w() {
     set -o pipefail
     dir2=${dir2// /\\ }
     logd "[rsync_w] rsync -ahv ${ext_opts} '${dir1}/' '${dir2}'..."
-    rsync -ahv ${ext_opts} -e "ssh ${ssh_args}" "${dir1}/" "${dir2}" | logx "  "
+    ext_opts+=" -a -h"
+    is_true "${DEBUG}" && ext_opts+=" -v" 
+    rsync ${ext_opts} -e "ssh ${ssh_args}" "${dir1}/" "${dir2}" | logx "  "
     local res=$?
     set +o pipefail
     return ${res}
@@ -434,6 +532,8 @@ rsync_w() {
 sync_dirs() {
     local dir1=${1}
     local dir2=${2}
+    dir1=${dir1#localhost:}
+    dir2=${dir2#localhost:}
     local ext_opts=${3:-"--delete"}
     if [[ "${dir1}" != "${dir2}" ]]
     then
@@ -541,13 +641,23 @@ ________EOF
 remote_cmd() {
     local rhost=${1}
     shift
-    remote_base_cmd "${rhost}" true "${SSH_HIDE_BANNER}" "${@}"
+    if [[ "${rhost}" == localhost ]]
+    then
+        "${@}"
+    else
+        remote_base_cmd "${rhost}" true "${SSH_HIDE_BANNER}" "${@}"
+    fi
 }
 
 remote_simple_cmd() {
     local rhost=${1}
     shift
-    remote_base_cmd "${rhost}" false true "${@}"
+    if [[ "${rhost}" == localhost ]]
+    then
+        "${@}"
+    else
+        remote_base_cmd "${rhost}" false true "${@}"
+    fi
 }
 
 abs_dir() {
@@ -575,10 +685,12 @@ get_dir() {
     pdir="${pdir//__HOSTNAME__/${hname}}"
     pdir="${pdir//__USER__/${huser}}"
     pdir="${pdir//__SSHUSER__/${hsshuser}}"
-    local par
-    (( PAR > 0 )) && par="_par${PAR}"
-    logd "get_dir: '${1}' -> '${pdir}${par}'"
-    echo "${pdir}${par}"
+    pdir="${pdir//__STAMP__/${STAMP}}"
+    pdir="${pdir//__RUN_NAME__/${RUN_NAME}}"
+    pdir="${pdir%_}"
+    (( PAR > 0 )) && pdir+="_par${PAR}"
+    logd "get_dir: '${1}' -> '${pdir}'"
+    echo "${pdir}"
 }
 
 get_data_dir() {
@@ -597,6 +709,11 @@ clean_dev_shm() {
 
 resolve_hostname() {
     local host_name=${1}
+    if [[ "${host_name}" == localhost ]]
+    then
+        echo "${host_name}"
+        return 0
+    fi
     local hosts_file=${HOSTS_FILE}
     local res
     [[ -f "${RESULTS_DIR}/hosts" ]] && hosts_file="${RESULTS_DIR}/hosts"
@@ -684,7 +801,7 @@ install_artifact() {
     then
         src=${DIST_DIR}
         distr=true
-    elif [[ "${src}" == http* ]]
+    elif [[ "${src}" == http* || "${src}" == "${DIST_DIR}" ]]
     then
         distr=true
     fi
@@ -709,7 +826,7 @@ install_artifact() {
     if [[ -d "${app_home}" ]]
     then
         local check=$(find "${app_home}" -type d -empty)
-        if [[ -n "${check}" ]]
+        if [[ "${check}" == "${app_home}" ]]
         then
             log "[install_artifact] Existing application dir is empty: ${app_home}"
         elif is_true "${force_remove}"
@@ -901,27 +1018,33 @@ print_sys_info() {
     env
     echo
     echo "-------------------- diskinfo -------------------"
-    df -h
+    df -ah
     echo
     echo "-------------------- lsblk -------------------"
-    lsblk
+    lsblk -a -t -o name,type,rota,size,mountpoint,fstype || lsblk
     echo
     echo "-------------------- sysctl ---------------------"
     sysctl -a
+    echo
+    echo "-------------------- tuned ---------------------"
+    tuned-adm profile_mode
+    tuned-adm active
     echo
     } |& cat
 }
 
 drop_caches() {
     is_true "${DROP_CACHES}" || return
-    if [[ -f /home/dolphin/taskpool/bin/z_sudo ]]
+    local z_sudo=/home/dolphin/taskpool/bin/z_sudo
+    [[ -f "${z_sudo}" ]] || z_sudo=/efs/dolphin/taskpool/bin/z_sudo
+    if [[ -f "${z_sudo}" ]]
     then
         log_sep
         log "----------------------------- mem before caches drop --------------------------"
         print_free_mem |& logx ''
         log_sep
         log "Dropping caches..."
-        sudo -n /home/dolphin/taskpool/bin/z_sudo drop_caches > /dev/null || return 1
+        sudo -n "${z_sudo}" drop_caches > /dev/null || return 1
         log "----------------------------- mem after caches drop ---------------------------"
         print_free_mem |& logx ''
         log_sep
@@ -933,6 +1056,8 @@ drop_caches() {
     fi
 }
 
+var_old_pgrep=""
+
 find_process() {
     local quiet=false
     if [[ "${1}" == -q ]]
@@ -941,6 +1066,17 @@ find_process() {
         shift
     fi
     local pars="-u $(whoami) -a"
+    if [[ -z "${var_old_pgrep}" ]]
+    then
+        local test_log=$(pgrep ${pars} "${args}" |& grep -- "invalid option -- 'a'")
+        if [[ -n "${test_log}" ]]
+        then
+            var_old_pgrep=true
+        else
+            var_old_pgrep=false
+        fi
+       fi
+       ${var_old_pgrep} && pars="-u $(whoami)"
     while [[ "${1}" == -* ]]
     do
         pars="${pars} ${1}"
@@ -948,7 +1084,6 @@ find_process() {
     done
     local args="${@}"
     ${quiet} || log "[find_process] pgrep ${pars} '${args}' ..."
-    local procs=$(pgrep ${pars} "${args}")
     local proc
     local pid
     local pids=()
@@ -960,7 +1095,7 @@ find_process() {
         [[ "${pid}" == $$ ]] && continue
         ${quiet} || log "[find_process] found: ${proc} (pid: ${pid})"
         epids+=(${pid})
-    done <<< ${procs}
+    done <<< "$(pgrep ${pars} "${args}")"
     echo ${epids[@]}
     [[ -n "${epids[@]}" ]]
 }
@@ -998,7 +1133,7 @@ stop_process() {
         log "[stop_process] nothing to kill for '${@}'"
         return
     fi
-    for (( i = 0; i < 30; i++ ))
+    for (( i = 0; i < 10; i++ ))
     do
         if procs=$(find_process -q "${@}")
         then
@@ -1010,8 +1145,8 @@ stop_process() {
     if procs=$(find_process "${@}")
     then
         log "[stop_process] force killing ${procs} ..."
-        pkill -9 ${procs}
-        for (( i = 0; i < 30; i++ ))
+        kill -9 ${procs}
+        for (( i = 0; i < 10; i++ ))
         do
             if procs=$(find_process -q "${@}")
             then
@@ -1058,7 +1193,6 @@ wait_for_app_start() {
 }
 
 start_top() {
-    has_item top "${USE_MONITORS}" || return
     local output=${1:-top.log}
     local hname=${2:-${HOSTNAME}}
     local delay=5
@@ -1088,7 +1222,6 @@ start_top() {
 }
 
 start_top_threads() {
-    has_item top_threads "${USE_MONITORS}" || return
     local output=${1:-top_threads.log}
     local hname=${2:-${HOSTNAME}}
     local delay=5
@@ -1115,8 +1248,7 @@ start_diskstats() {
 }
 
 start_diskspace() {
-    local data_dir="$(get_data_dir ${hname})"
-    fork_monitor diskspace "${1}" "" 10 "${data_dir}" 
+    fork_monitor diskspace "${1}" "" "" "${MONITOR_DIRS}" 
 }
 
 start_ipstats() {
@@ -1124,13 +1256,12 @@ start_ipstats() {
 }
 
 start_vmstats() {
-    fork_monitor vmstats "${1}" "" 30
+    fork_monitor vmstats "${1}"
 }
 
 fork_monitor() {
     local sname=$1
     shift
-    has_item "${sname}" "${USE_MONITORS}" || return
     local output=${1:-${sname}.log}
     shift
     local hname=${1:-${HOSTNAME}}
@@ -1180,25 +1311,25 @@ check_monitors() {
     fi
 }
 
-start_monitor_tools() {
-	local out_dir=${1:-.}
-	mkdir -p "${out_dir}" || return 1
-	print_sys_info > "${out_dir}/system_info1.log"
-	log
-	log "Starting monitor tools ..."
-    start_top "${out_dir}/top.log"
-    start_top_threads "${out_dir}/top_threads.log"
-    start_mpstat "${out_dir}/mpstat.log"
-    start_ipstats "${out_dir}/ipstat.log"
-    start_vmstats "${out_dir}/vmstats.log"
-    start_diskstats "${out_dir}/diskstat.log"
-    start_diskspace "${out_dir}/diskspace.log"
+start_monitors() {
+    local out_dir=${1:-.}
+    mkdir -p "${out_dir}" || return 1
+    print_sys_info > "${out_dir}/system_info1.log"
+    log
+    log "Starting monitor tools ..."
+    has_item top "${USE_MONITORS}" && start_top "${out_dir}/top.log"
+    has_item top_threads "${USE_MONITORS}" && start_top_threads "${out_dir}/top_threads.log"
+    has_item mpstat "${USE_MONITORS}" && start_mpstat "${out_dir}/mpstat.log"
+    has_item ipstats "${USE_MONITORS}" && start_ipstats "${out_dir}/ipstat.log"
+    has_item vmstats "${USE_MONITORS}" && start_vmstats "${out_dir}/vmstats.log"
+    has_item diskstats "${USE_MONITORS}" && start_diskstats "${out_dir}/diskstat.log"
+    has_item diskspace "${USE_MONITORS}" && start_diskspace "${out_dir}/diskspace.log"
     start_custom_script "${out_dir}"
     log
 }
 
-stop_monitor_tools() {
-	local out_dir=${1}
+stop_monitors() {
+    local out_dir=${1}
     has_item top "${USE_MONITORS}" && stop_process -f "top -i -c -b -d" 
     has_item top_threads "${USE_MONITORS}" && stop_process -f "top -H -b -d"
     has_item mpstat "${USE_MONITORS}" && stop_process mpstat
@@ -1214,7 +1345,7 @@ wait_for_port() {
     local name=${2}
     local times_cnt=0
     local times_max=${3:-30}
-    log "Waiting for ${name}..."
+    log "Waiting for ${name} on port ${port}..."
     while ! netstat -lnt | grep -q ${port}
     do
         (( times_cnt++ ))
@@ -1271,7 +1402,8 @@ node_cmd() {
         "USE_MONITORS=${USE_MONITORS}" "CUSTOM_SCRIPT=${CUSTOM_SCRIPT}" \
         "DEBUG=${DEBUG}" "HOSTS_FILE=${HOSTS_FILE}" "SSH_USER=${SSH_USER}" \
         "APPS_DIR=${APPS_DIR}" "DATA_DIR=${DATA_DIR}" "APP_NAME=${APP_NAME}" \
-        "DIST_DIR=${DIST_DIR}" "PAR=${PAR}" "CLEAN_DEV_SHM=${CLEAN_DEV_SHM}" "${NODE_OPTS[@]}" \
+        "DIST_DIR=${DIST_DIR}" "PAR=${PAR}" "CLEAN_DEV_SHM=${CLEAN_DEV_SHM}" \
+        "MONITOR_DIRS=${MONITOR_DIRS}" "${NODE_OPTS[@]}" \
         ${func} ${node} ${node_num} "${@}"
     fi
     local res=$?
@@ -1279,17 +1411,16 @@ node_cmd() {
     return ${res}
 }
 
-var_nodes=()
-
 _IS_NUMBER='^[0-9]+$'
 
 print_nodes() {
-    local nodes="${@:-localhost}"
+    local nodes=${@}
+    nodes=${nodes:-localhost}
     echo ${nodes//,/ }
 }
 
 print_nodes_hosts() {
-    local nodes=( $( print_nodes ${NODES} ) )
+    local nodes=( $(print_nodes ${NODES}) )
     local node
     local hosts=()
     local host
@@ -1315,7 +1446,7 @@ get_node_from_param() {
     local node=${1}
     if [[ "${node}" == LAST_NODE || "${node}" =~ $_IS_NUMBER ]]
     then
-        local nodes=( $( print_nodes ${NODES} ) )
+        local nodes=( $(print_nodes ${NODES}) )
         local node_count=${#nodes[@]}
         local idx=$((node_count - 1))
         if [[ "${node}" == LAST_NODE ]]
@@ -1332,7 +1463,7 @@ get_node_from_param() {
 is_first_node() {
     local idx=${1}
     local is_first=true
-    local nodes=( $( print_nodes ${NODES} ) )
+    local nodes=( $(print_nodes ${NODES}) )
     local node=${nodes[idx]}
     local node_host=${node%:*}
     local ii=0
@@ -1346,14 +1477,14 @@ is_first_node() {
     echo -n $is_first
 }
 
-get_node_count() {
-    local nodes=( $( print_nodes ${NODES} ) )
+get_nodes_count() {
+    local nodes=( $(print_nodes ${NODES}) )
     echo -n ${#nodes[@]}
 }
 
 get_node_name() {
     local idx=${1}
-    local nodes=( $( print_nodes ${NODES} ) )
+    local nodes=( $(print_nodes ${NODES}) )
     local node=${nodes[idx]}
     local node_name=${node/:/_}
     echo -n "${node_name}"
@@ -1361,74 +1492,146 @@ get_node_name() {
 
 get_node_host() {
     local idx=${1}
-    local nodes=( $( print_nodes ${NODES} ) )
+    local nodes=( $(print_nodes ${NODES}) )
     local node=${nodes[idx]}
     local rhost=${node/:*}
     echo -n "${rhost}"
 }
 
+get_node_port() {
+    local idx=${1}
+    local nodes=( $(print_nodes ${NODES}) )
+    local node=${nodes[idx]}
+    local node_port=0
+    [[ "${node}" == *:* ]] && node_port=${node#*:}
+    echo -n "${node_port}"
+}
+
 get_master_node() {
     local resolve=${1}
-    local nodes=( $( print_nodes ${NODES} ) )
+    local nodes=( $(print_nodes ${NODES}) )
     local res=${nodes[0]}
     is_true "${resolve}" && res=$(resolve_hostname "${res}")
     echo ${res}
 }
 
-declare -A DEFAULT_PORTS
-DEFAULT_PORTS[kafka]=0
-DEFAULT_PORTS[cassandra]=0
-DEFAULT_PORTS[elasticsearch]=9200
-
 parse_nodes() {
     if (( NUM_NODES > 0 ))
     then
-        logd "Parse nodes: ${NODES:-localhost} - already parsed $NUM_NODES"
+        logd "[parse_nodes]: ${NODES:-localhost} - already parsed ${NUM_NODES}"
         return
     fi
-    log "Parse nodes: ${NODES:-localhost}..."
-    local app_name=${1}
-    local app_name_lc=${app_name,,}
     NODES_WITH_PORTS=""
     NODES_IP=""
     NODES_IP_WITH_PORTS=""
-    local res=0
+    log "[parse_nodes]: ${NODES:-localhost}..."
+    local defaultPort=${1:-0}
+    local numnodePorts=${2:-false}
+    local resolveIPs=${3:-false}
     local node
-    if [[ -n "$NODES" ]]
+    local nodes
+    local node_ip
+    if [[ -n "${NODES}" ]]
     then
-        var_nodes=( $( print_nodes ${NODES} ) )
-        NUM_NODES="${#var_nodes[@]}"
-        log "  master node: ${var_nodes[0]}"
-        log "  num nodes: $NUM_NODES"
-        for node in "${var_nodes[@]}"
+        nodes=( $(print_nodes ${NODES}) )
+        NUM_NODES="${#nodes[@]}"
+        log "  master node: ${nodes[0]}"
+        log "  num nodes: ${NUM_NODES}"
+        local node_num=0
+        for node in "${nodes[@]}"
         do
+            (( node_num++ ))
             local node_host=${node%:*}
-            node_ip=$(resolve_hostname "$node_host")
-            log "  node $node, IP: $node_ip"
-            if [[ -n "$NODES_WITH_PORTS" ]]
+            if is_true "${resolveIPs}"
             then
-                NODES_WITH_PORTS="${NODES_WITH_PORTS},"
-                NODES_IP="${NODES_IP},"
-                NODES_IP_WITH_PORTS="${NODES_IP_WITH_PORTS},"
+                node_ip=$(resolve_hostname "$node_host")
+                log "  node ${node}, IP: ${node_ip}"
             fi
-            local port=${DEFAULT_PORTS[$app_name_lc]}
-            [[ "${node}" == *:* ]] && port=${node#*:}
-            NODES_WITH_PORTS="${NODES_WITH_PORTS}${node}:${port}"
-            NODES_IP="${NODES_IP}${node_ip}"
-            NODES_IP_WITH_PORTS="${NODES_IP_WITH_PORTS}${node_ip}:${port}"
+            if [[ -n "${NODES_WITH_PORTS}" ]]
+            then
+                NODES_WITH_PORTS+=,
+                NODES_IP+=,
+                NODES_IP_WITH_PORTS+=,
+            fi
+            local port=${defaultPort}
+            local pnum=0
+            if is_true "${numnodePorts}"
+            then
+                pnum=$((node_num - 1))
+            elif [[ "${node}" == *:* ]]
+            then
+                pnum=${node#*:}
+            fi
+            port=$((port + pnum))
+            NODES_WITH_PORTS+="${node}:${port}"
+            if is_true "${resolveIPs}"
+            then
+                NODES_IP+="${node_ip}"
+                NODES_IP_WITH_PORTS+="${node_ip}:${port}"
+            fi
         done
     else
-        var_nodes=( localhost )
+        nodes=( localhost )
         NUM_NODES=1
-        local port=${DEFAULT_PORTS[$app_name_lc]}
+        local port=${defaultPort}
         NODES_WITH_PORTS="localhost:${port}"
         NODES_IP="127.0.0.1"
         NODES_IP_WITH_PORTS="127.0.0.1:${port}"
         log "  master node: localhost"
-        log "  num nodes: $NUM_NODES"
+        log "  num nodes: ${NUM_NODES}"
     fi
-    log "Parse nodes done: $NUM_NODES -> ${var_nodes[@]}"
-    return ${res}
+    log "[parse_nodes] NODES[${NUM_NODES}]: ${nodes[@]}"
+    log "[parse_nodes] NODES_WITH_PORTS=${NODES_WITH_PORTS}"
+    if is_true "${resolveIPs}"
+    then
+        log "[parse_nodes] NODES_IP=${NODES_IP}"
+        log "[parse_nodes] NODES_IP_WITH_PORTS=${NODES_IP_WITH_PORTS}"
+    fi
+}
+
+install_tools_node() {
+    log "install_tools_node: [${@}]"
+    local node=${1}
+    local host_name=${node/:*}
+    install_tools "${host_name}:${TOOLS_HOME}"
+}
+
+fetch_logs_node() {
+    log "fetch_logs_node: [${@}]"
+    local node=${1}
+    local node_num=${2}
+    local app_name=${3}
+    local wrk_dir=$(get_dir "${DATA_DIR}/${app_name}")
+    local host_name=${node/:*}
+    fetch_logs "${host_name}" "${wrk_dir}" "${RESULTS_DIR}"
+}
+
+cleanup_tools_node() {
+    log "cleanup_tools_node: [${@}]"
+    local node=${1}
+    local node_num=${2}
+    local app_home=$(get_dir "${APPS_DIR}/kafka")
+    {
+    host_cmd "${node}" rm -fr "${TOOLS_HOME}" 
+    host_cmd "${node}" rmdir -v "${app_home}"
+    } | logx
+}
+
+cleanup_node() {
+    log "cleanup_node: [${@}]"
+    local node=${1}
+    local node_num=${2}
+    local app_name=${3}
+    local app_home=$(get_dir "${APPS_DIR}/${app_name}")
+    local wrk_dir=$(get_dir "${DATA_DIR}/${app_name}")
+    cleanup_artifacts "${wrk_dir}"
+    [[ -d "${wrk_dir}" ]] && rmdir -v "${wrk_dir}" 2>/dev/null | logx
+    if [[ "${app_home}" != "${wrk_dir}" ]]
+    then
+        cleanup_artifacts "${app_home}"
+        [[ -d "${app_home}" ]] && rmdir -v "${app_home}" 2>/dev/null | logx
+    fi
+    return 0
 }
 
 # nodes function method
@@ -1446,7 +1649,7 @@ nodes_func() {
     shift
     local res=0
     local node
-    nodes=( $( print_nodes "${nodes}" ) )
+    nodes=( $(print_nodes "${nodes}") )
     local n=${#nodes[@]}
     logd "[nodes_func] ${n} nodes - ${nodes[@]}"
     local node_num=0
@@ -1486,7 +1689,7 @@ nodes_cmd() {
     shift
     local res=0
     local node
-    nodes=( $( print_nodes "${nodes}" ) )
+    nodes=( $(print_nodes "${nodes}") )
     local n=${#nodes[@]}
     logd "[nodes_cmd] ${n} nodes - ${nodes[@]}"
     local node_num=0
@@ -1649,7 +1852,8 @@ detect_os_name() {
 check_jvm_log() {
     local f=${1}
     if tail -10 "$f" | grep -q "Could not create the Java Virtual Machine\|There is insufficient memory\|Error occurred during initialization of VM\|Unable to find java executable" || \
-       tail -10 "$f" | grep -q "Hard stop enforced\|Zing VM Error\|java does not meet this requirement\|Could not create the Java Virtual Machine\|Failed to fund AC"
+       tail -10 "$f" | grep -q "Could not find or load main class" || \
+       tail -10 "$f" | grep -q "Hard stop enforced\|Zing VM Error\|java does not meet this requirement\|Could not create the Java Virtual Machine\|Failed to fund AC\|The minimum required Java version"
     then
         log "Failed to start JVM. Following error has been reported:"
         echo ${LOG_SEP}
@@ -1666,7 +1870,7 @@ create_run_properties() {
     local use_log=${2:-false}
     local log_dir=${3:-${res_dir}}
     local res_dir_abs=$(cd "${res_dir}"; pwd)
-    logd "Results dir: ${res_dir}_abs"
+    logd "[run_properties] results dir: ${res_dir_abs}"
 
     local blog=$(find "$log_dir" -name "run-benchmark.log*")
     local time_file="${res_dir}/time_out.log"
@@ -1706,15 +1910,14 @@ create_run_properties() {
         log "Using time file: ${time_file}"
         start_time=$(iso_time $(head -1 "${time_file}"))
         finish_time=$(iso_time $(tail -1 "${time_file}"))
-    elif [[ -e "$ORIG_FILE" ]]
+    elif [[ -e "${ORIG_FILE}" ]]
     then
-        local file_time=$(stat -c %y "$ORIG_FILE")
-        log "Using orig file time: $ORIG_FILE -> ${file_time}"
-        start_time=$(date "+$TIME_FORMAT_Z" -d "${}file_time}")
+        local file_time=$(stat -c %y "${ORIG_FILE}")
+        log "Using orig file time: ${ORIG_FILE} -> ${file_time}"
+        start_time=$(date "+$TIME_FORMAT_Z" -d "${file_time}")
     else
-        local stamp=$(get_stamp)
-        log "Using stamp time: $stamp"
-        start_time=$(iso_time $stamp)
+        log "Using stamp time: $START_TIME"
+        start_time=$(iso_time $START_TIME)
         grep start_time "${props}" && update_times=false
     fi
 
@@ -2019,10 +2222,11 @@ preprocess_java_opts() {
     local script_dir=${5:-${UTILS_SCRIPT_DIR}}
     local hargs
     [[ -n "${JHICCUP_ARGS}" ]] && hargs="=${JHICCUP_ARGS}"
-    local gcargs=${JAVA_OPTS_GC_LOG}
     java_opts=$(echo "${java_opts}" | sed "s|__G1__|${JAVA_OPTS_G1}|g;  s|__CMS__|${JAVA_OPTS_CMS}|g;  s|__FALCON__|${JAVA_OPTS_FALCON}|; s|__C2__|${JAVA_OPTS_C2}|; ")
-    java_opts=$(echo "${java_opts}" | sed "s|__LOGGC__|${gcargs}|g;  s|__LOGCOMP__|${JAVA_OPTS_COMP_LOG}|g; ")
-    java_opts=$(echo "${java_opts}" | sed "s|__GC_LOG__|__DIR__/__NAME___%t.%p_gc.log|g")
+    java_opts=$(echo "${java_opts}" | sed "s|__LOGCOMP_STAMP__|${JAVA_OPTS_COMP_LOG_STAMP}|g;  s|__LOGCOMP__|${JAVA_OPTS_COMP_LOG}|g; ")
+    java_opts=$(echo "${java_opts}" | sed "s|__LOGGC_STAMP__|${JAVA_OPTS_GC_LOG_STAMP}|g;  s|__LOGGC__|${JAVA_OPTS_GC_LOG}|g; ")
+    java_opts=$(echo "${java_opts}" | sed "s|__GC_LOG_STAMP__|__DIR__/__NAME___%t.%p_gc.log|g")
+    java_opts=$(echo "${java_opts}" | sed "s|__GC_LOG__|__DIR__/__NAME___gc.log|g")
     java_opts=$(echo "${java_opts}" | sed "s|__JHICCUP__|-javaagent:${script_dir}/jHiccup.jar${hargs}|g")
     java_opts=$(echo "${java_opts}" | sed "s|__RESET__|-javaagent:${script_dir}/reset-agent.jar=terminateVM=false,timeinterval=${RESET_INTERVAL},iterations=${RESET_ITERATIONS}|g")
     java_opts=$(echo "${java_opts}" | sed "s|__DIR__|${dir}|g")
@@ -2113,11 +2317,35 @@ set_properties() {
     fi
 }
 
+print_func_body() {
+    local func=$1
+    declare -f ${func}
+}
+
+#
+# some tests
+#
 
 t() {
     log "[TEST] Test [${@}]"
     "${@}"
     log "[TEST] Test result: $?"
+}
+
+#
+# iso_time test: 2022-10-14 09:01:18,477,UTC -> 2022-10-14T09:01:18
+#
+iso_time_test() {
+    local p=$(get_stamp)
+    echo "$p -> $(iso_time $p)"
+}
+
+#
+# iso_time test: 2022-10-14 09:01:18,477,UTC -> 20221014T090118Z
+#
+time_z_test() {
+    local p=$(get_stamp)
+    echo "$p -> $(time_z $p)"
 }
 
 test_ok() {
@@ -2149,17 +2377,30 @@ test_true() {
 }
 
 test_bool() {
-echo "[[ a == b ]]"
-[[ a == b ]]
-echo $?
-echo "[[ a == a ]]"
-[[ a == a ]]
-echo $?
-test_true 
-test_true false
-test_true true
-test_true 1
-test_true 0
+    echo "[[ a == b ]]"
+    [[ a == b ]]
+    echo $?
+    echo "[[ a == a ]]"
+    [[ a == a ]]
+    echo $?
+    test_true 
+    test_true false
+    test_true true
+    test_true 1
+    test_true 0
+    echo "if true false"
+    if true; then false; fi
+    echo $?
+    echo "if true true"
+    if true; then true; fi
+    echo $?
+    echo "if false true"
+    if false; then true; fi
+    echo $?
+    echo "false if false true"
+    false
+    if false; then true; fi
+    echo $?
 }
 
 if [[ "${BASH_SOURCE}" == "${0}" ]]

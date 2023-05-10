@@ -43,11 +43,13 @@ get_stamp() {
 
 START=$(get_stamp)
 DELAY=${1:-5}
-HOST=${2:-$HOSTNAME}
-DATA_DIR=${3}
+shift
+HOST=${1:-$HOSTNAME}
+shift
+DIRS=${@//,/ }
 no=0
 
-echo "DATA_DIR: ${DATA_DIR}"
+echo "DIRS: ${DIRS}"
 echo "DELAY: ${DELAY}"
 echo "START: ${START}"
 echo "HOST: ${HOST}"
@@ -57,7 +59,7 @@ while true
 do
     (( no++ ))
     echo $(get_stamp) - ${no}
-    df -h "${DATA_DIR}"
+    df -h ${DIRS}
     sleep "$DELAY"
     echo
 done

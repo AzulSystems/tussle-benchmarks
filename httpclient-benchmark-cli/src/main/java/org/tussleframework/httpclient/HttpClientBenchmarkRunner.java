@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, Azul Systems
+ * Copyright (c) 2021-2023, Azul Systems
  * 
  * All rights reserved.
  * 
@@ -39,5 +39,5 @@ public class HttpClientBenchmarkRunner {
     public static void main(String[] args) {
         LoggerTool.init("benchmark");
         Run.run(new HttpClientBenchmark(), args);
-   }
+    }
 }

@@ -13,7 +13,7 @@ cqlsh_extra_args=${CQLSH_EXTRA_ARGS:-""}
 ycsb_extra=${YCSB_EXTRA_OPTS:-""}
 ycsb_java_opts_extra=${YCSB_JAVA_EXTRA_OPTS:-""}
 
-APP_NAME=${APP_NAME:-cassandra-3.11.10}
+APP_NAME=${APP_NAME:-cassandra-4.0.1}
 JAVA_OPTS=${JAVA_OPTS:-${DEFAULT_JAVA_OPTS}}
 RESULTS_DIR=${RESULTS_DIR:-}
 NUMACTL_YCSB=${NUMACTL_YCSB:-"numactl -N 0 -m 0"}
@@ -87,6 +87,7 @@ stop_start_node() {
     stop_process -f ".*ZVRobot.prop"
     stop_process -f init_cassandra_node
     stop_process -f start_cassandra_node
+    stop_process -f wait_cassandra_node_started
 }
 
 cleanup_cassandra_node() {
@@ -259,9 +260,9 @@ start_cassandra_node() {
     local node_dir="${RESULTS_DIR}/node_${node}"
     local data_dir="$(get_data_dir ${node})"
     local app_home="${data_dir}/${APP_NAME}"
+    local java_opts=$(get_java_opts . cassandra)
     local cass_ver=${APP_NAME##*/}
     cass_ver=${cass_ver#*-}
-    local java_opts=$(get_java_opts . cassandra)
     (( start_num == 1 )) && print_sys_info > "${node_dir}/system_info1.log"
     local heap=1
     if echo ${java_opts} | grep -- -Xmx
@@ -280,16 +281,8 @@ start_cassandra_node() {
     fi
     [[ -n "${DOCKER_CPUS}" ]] && dock_args+=" --cpus=${DOCKER_CPUS}"
     [[ -d /etc/zing ]] && dock_args+=" -v /etc/zing:/etc/zing"
-    local img=centos
-    if [[ "${DOCKER_ZST}" == true ]]
-    then
-        dock_args+=" --device /dev/zing_mm0:/dev/zing_mm0"
-        dock_args+=" --device /dev/zing_mm1:/dev/zing_mm1"
-        img=centos_z
-    fi
     local ARTAPort
     echo "${java_opts}" | grep -q ARTAPort && ARTAPort=(${java_opts/*ARTAPort=/})
-    # -p 7000:7000 -p 7001:7001 -p 9042:9042 \
     local cmdx
     [[ "${DOCKER}" == true ]] && cmdx="docker run --rm \
         ${dock_args} \
@@ -299,7 +292,7 @@ start_cassandra_node() {
         -v ${DATA_DIR}:${DATA_DIR} -v ${RESULTS_DIR}:${RESULTS_DIR} -v ${data_dir}:${data_dir} \
         -v /home:/home -w ${node_dir} \
         -e JAVA_HOME=${JAVA_HOME} -e JVM_OPTS= \
-        ${img} bash ${CASSANDRA_SCRIPT_DIR}/umask_run.sh "
+        centos bash ${CASSANDRA_SCRIPT_DIR}/umask_run.sh "
     log "Starting Cassandra node '$node'..."
     log "  Start number: ${start_num}"
     log "  Cassandra home: ${app_home}"
@@ -334,7 +327,21 @@ start_cassandra_node() {
         cd "${node_dir}"
         ${cmdx} ${app_home}/bin/cassandra -f &> "${out}" &
     )
-    sleep 10
+}
+
+wait_cassandra_node_started() {
+    local node=$1
+    local node_num=$2
+    local node_num_=$((node_num - 1))
+    local start_num=$3
+    local node_dir="${RESULTS_DIR}/node_${node}"
+    local data_dir="$(get_data_dir ${node})"
+    local app_home="${data_dir}/${APP_NAME}"
+    local java_opts=$(get_java_opts . cassandra)
+    local out="${node_dir}/cassandra${node_num}_out.log"
+    local ARTAPort
+    echo "${java_opts}" | grep -q ARTAPort && ARTAPort=(${java_opts/*ARTAPort=/})
+    ##sleep 10
     wait_for_app_start "Cassandra" "${out}" "Starting listening for CQL clients on" || return 1
     log_cmd "ZST info after Cassandra start" "zing-ps -V && zing-ps -s"
     (( start_num == 1 )) && start_monitor_tools "${node_dir}"
@@ -428,7 +435,7 @@ cassandra_node_cmd() {
     else
         host_cmd "$node" "bash '${CASSANDRA_RUN_CMD}' cassandra_utils_cmd 'DEBUG=${DEBUG}' 'RESULTS_DIR=${RESULTS_DIR}' \
         'APPS_DIR=${APPS_DIR}' 'DATA_DIR=${DATA_DIR}' 'APP_NAME=${APP_NAME}' 'DIST_DIR=${DIST_DIR}' 'HOSTS_FILE=${HOSTS_FILE}' \
-        'DOCKER=${DOCKER}' 'NODE_CPU=${NODE_CPU}' 'DOCKER_MEM=${DOCKER_MEM}' 'DOCKER_CPUS=${DOCKER_CPUS}' \
+        'DOCKER=${DOCKER}' 'NODE_CPU=${NODE_CPU}' 'DOCKER_MEM=${DOCKER_MEM}' 'DOCKER_CPUS=${DOCKER_CPUS}' 'USE_TOP=${USE_TOP}' \
         'NUM_TOKENS=${NUM_TOKENS}' 'CLIENT_TLS=${CLIENT_TLS}' 'SERVER_TLS=${SERVER_TLS}' 'NUMACTL_ARGS=${NUMACTL_ARGS}' \
         'JAVA_HOME=${JAVA_HOME}' 'JAVA_VERSION=${JAVA_VERSION}' 'JAVA_OPTS=${JAVA_OPTS}' 'CASSANDRA_PROPS=${CASSANDRA_PROPS}' 'COLLECT=${COLLECT}' 'ZVR_SECONDS=${ZVR_SECONDS}' \
         $func $node ${@}"
@@ -444,8 +451,10 @@ init_cassandra() {
 
 start_cassandra() {
     (( var_cassandra_start_num++ ))
-    log "Starting Cassandra cluster [${var_cassandra_start_num}]..."
+    log "Starting Cassandra nodes [${var_cassandra_start_num}]..."
     start_nodes Cassandra "cassandra_node_cmd start_cassandra_node" ${var_cassandra_start_num} || return 1
+    log "Waiting for Cassandra nodes started [${var_cassandra_start_num}]..."
+    start_nodes Cassandra "cassandra_node_cmd wait_cassandra_node_started" ${var_cassandra_start_num} || return 1
     return 0
 }
 

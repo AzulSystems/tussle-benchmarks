@@ -1,6 +1,7 @@
 bin/
 lib/
 target/
+.idea
 .project
 .classpath
 .settings
@@ -14,4 +15,4 @@ histograms*
 results*
 report*
 metrics.json
-tests.sh
+result.json

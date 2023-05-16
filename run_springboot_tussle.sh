@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2021-2022 Azul Systems Inc.  All Rights Reserved.
+# Copyright 2021 Azul Systems Inc.  All Rights Reserved.
 # 
 # All rights reserved.
 # 

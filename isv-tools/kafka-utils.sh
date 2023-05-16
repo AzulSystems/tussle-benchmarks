@@ -450,6 +450,7 @@ cleanup_broker() {
         mkdir -p "${ddir}" || return 1
         clean_dir "${ddir}" | logx "[clean_dir] " 10
     done
+    cleanup_node "${node}" "${node_num}" kafka
 }
 
 #

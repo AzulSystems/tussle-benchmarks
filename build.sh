@@ -32,31 +32,37 @@
 
 _BASE_DIR=$(cd $(dirname $0); pwd)
 
-make_sb() {(
-    cd ${_BASE_DIR}/springboot-benchmark-app || exit 1
+make_proj() {
+    local dir=$1
+    (
+    cd ${dir} || exit 1
     echo "Building $(pwd)..."
-    mvn clean
-    mvn package -DskipTests && \
-    from=$(find target -name *.jar) && \
-    to=${from/-jar-with-dependencies/} && \
+    mvn clean package -DskipTests && \
+    from=$(find target -name "*.jar") && \
     to=../lib/${to##*/} && \
     cp -fv ${from} ${to} && \
     chmod 777 ${to}
-)}
+    )
+}
 
-make_cli() {(
-    cd ${_BASE_DIR}/httpclient-benchmark-cli || exit 1
-    echo "Building $(pwd)..."
-    mvn clean 
-    mvn package -DskipTests && \
-    from=$(find target -name *-jar-with-dependencies.jar) && \
-    to=${from/-jar-with-dependencies/} && \
-    to=../lib/${to##*/} && \
-    cp -fv ${from} ${to} && \
-    chmod 777 ${to}
-    echo "Installing built file '${to}' ..."
-    mvn install:install-file -Dfile=${to} -DpomFile=pom.xml
-)}
+make_sb() {
+    make_proj ${_BASE_DIR}/springboot-benchmark-app
+}
+
+make_cli() {
+    make_proj  ${_BASE_DIR}/httpclient-benchmark-cli
+    local cli=$(find ${_BASE_DIR}/httpclient-benchmark-cli/target -name "*.jar")
+    echo "Installing built file '${cli}' ..."
+    mvn install:install-file -Dfile=${cli} -DpomFile=pom.xml
+}
+
+make_io() {
+    make_proj ${_BASE_DIR}/io-benchmark
+}
+
+make_sql() {
+    make_proj ${_BASE_DIR}/sql-benchmark
+}
 
 mkdir -p lib
-make_cli && make_sb
+make_cli && make_sb && make_io && make_sql

@@ -34,11 +34,12 @@ _BASE_DIR=$(cd $(dirname $0); pwd)
 
 make_proj() {
     local dir=$1
+    local pak=$2
     (
     cd ${dir} || exit 1
     echo "Building $(pwd)..."
     mvn clean package -DskipTests && \
-    from=$(find target -name "*.jar") && \
+    from=$(find target -maxdepth 1 -name "*.${pak}") && \
     to=../lib/${to##*/} && \
     cp -fv ${from} ${to} && \
     chmod 777 ${to}
@@ -57,12 +58,16 @@ make_cli() {
 }
 
 make_io() {
-    make_proj ${_BASE_DIR}/io-benchmark
+    make_proj ${_BASE_DIR}/io-benchmark jar
 }
 
 make_sql() {
-    make_proj ${_BASE_DIR}/sql-benchmark
+    make_proj ${_BASE_DIR}/sql-benchmark jar
+}
+
+make_isvviewer() {
+    make_proj ${_BASE_DIR}/isv-viewer war
 }
 
 mkdir -p lib
-make_cli && make_sb && make_io && make_sql
+make_cli && make_sb && make_io && make_sql && make_isvviewer

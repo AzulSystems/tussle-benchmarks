@@ -1,0 +1,15 @@
+
+#server:
+#  context-path: /perf
+#  port: 8443
+
+server:
+   max-http-header-size: 100KB
+   servlet:
+      context-path: /perf
+
+es_host: localhost:10200
+
+jfr_host: localhost:9200
+
+flamegraph_cmd: /home/${user.name}/tools/FlameGraph/flamegraph.pl

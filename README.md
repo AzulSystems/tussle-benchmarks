@@ -82,15 +82,33 @@ host: localhost
 ```
 
 ## HTTP client benchmark <a name="http"/>
-
-Project location: [httpclient-benchmark-cli](httpclient-benchmark-cli)
+Project location: [httpclient-benchmark](httpclient-benchmark)
+Build:
+```
+$ cd io-benchmark/
+$ mvn clean package -DskipTests
+```
+Usage
+```
+$ java -jar target/httpclient-benchmark-*.jar  [...benchmark-args]  [--runner {tussle-benchmark-runner}  [{...runner-args}]]
+```
+Run:
+```
+$ java -jar target/httpclient-benchmark-*.jar
+```
+Results:
+```
+benchmark.log - benchmark output file
+histograms - directory containing collected result histograms which can be processed and visualized using corresponding tool from the Tussle Framework
+```
+Output:
+```
+```
 
 ## Springboot benchmark <a name="springboot"/>
-
 Project location: [springboot-benchmark-app](springboot-benchmark-app)
 
 ## IO benchmark <a name="io"/>
-
 Project location: [io-benchmark](io-benchmark)
 Build:
 ```
@@ -189,11 +207,7 @@ warmupTime: '0'
 2023-05-22 20:39:52,399,NOVT [HdrWriter] -------------------------------------------------------------------------------------------------------------------------- 
 2023-05-22 20:39:52,413,NOVT [HdrWriter]     write resp |      5 |   8.4% |    0.176 |    0.408 |    1.365 |    10.13 |   0.2511 |     5001 |      999 |     5001 
 2023-05-22 20:39:52,417,NOVT [HdrWriter]     write serv |      5 |   8.4% |    0.133 |    0.346 |     0.78 |    10.12 |   0.1798 |     5024 |     1000 |     5024 
-2023-05-22 20:39:57,397,NOVT [HdrWriter]     write resp |     10 |  16.7% |    0.134 |    0.248 |    0.392 |    9.391 |    0.159 |     4998 |     1000 |     9999 
-2023-05-22 20:39:57,405,NOVT [HdrWriter]     write serv |     10 |  16.7% |    0.082 |    0.176 |    0.297 |    9.303 |   0.1011 |     4985 |     1000 |    10009 
 ...
-2023-05-22 20:40:42,392,NOVT [HdrWriter]     write resp |     55 |  91.7% |    0.143 |    0.231 |    0.322 |    1.246 |   0.1518 |     5001 |     1000 |    55000 
-2023-05-22 20:40:42,396,NOVT [HdrWriter]     write serv |     55 |  91.7% |    0.087 |    0.163 |    0.237 |     0.54 |  0.09906 |     5003 |     1000 |    55004 
 2023-05-22 20:40:47,390,NOVT [HdrWriter]     write serv |     60 | 100.0% |    0.082 |    0.173 |    0.262 |    26.13 |   0.1017 |     4995 |     1000 |    59999 
 2023-05-22 20:40:47,399,NOVT [HdrWriter]     write resp |     60 | 100.0% |    0.124 |    0.238 |    0.399 |    26.19 |   0.2109 |     5000 |     1000 |    60000 
 2023-05-22 20:40:48,392,NOVT [TargetRunnerST] Result: RunResult(rateUnits=op/s, timeUnits=ms, actualRate=1000.0, errors=0, count=60000, time=60000) 
@@ -221,5 +235,6 @@ warmupTime: '0'
 ## ISV viewer<a name="isv-viewer"/>
 
 Project location: [isv-viewer](isv-viewer)
-Se [README](isv-viewer/README.md)
+
+See [README](isv-viewer/README.md) for details
 

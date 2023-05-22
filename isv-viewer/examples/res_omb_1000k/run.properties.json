@@ -1,0 +1,21 @@
+{ "doc" : { "run_properties": {
+  "config": "heap6 nodes_node1-i3en.2xlarge,node2-i3en.2xlarge,node3-i3en.2xlarge",
+  "host": "loadgen1-c5n.2xlarge",
+  "build": "zulu11.62.17-ca-jdk11.0.18-linux_x64",
+  "build_type": "",
+  "vm_type": "zulu",
+  "vm_home": "zulu11.62.17-ca-jdk11.0.18-linux_x64",
+  "vm_args": "-Xms6g -Xmx6g __JHICCUP__ __LOGGC__",
+  "vm_version": "11",
+  "client_vm_home": "zulu11.62.17-ca-jdk11.0.18-linux_x64",
+  "client_vm_args": "-Xmx8g -Xms8g __JHICCUP__ __LOGGC__",
+  "os": "Red Hat Enterprise Linux Server release 7.9 (Maipo)",
+  "application": "kafka_2.13-3.3.2",
+  "benchmark": "kafka-bench",
+  "workload": "kafka_omb//producers=4,consumers=4,topics=1,partitions=100,rf=3,batchSize=1048510,lingerMs=10,mlen=1024,targetRate=1000k,time=5m,warmup=1m,acks=all,insyncReplicas=2",
+  "workload_name": "kafka_omb",
+  "workload_parameters" : "producers=4,consumers=4,topics=1,partitions=100,rf=3,batchSize=1048510,lingerMs=10,mlen=1024,targetRate=1000k,time=5m,warmup=1m,acks=all,insyncReplicas=2",
+  "results_dir": "/efs/rscherba/kafka-bench/results_20230403T111858Z_kafka_omb_zulu11_h6_producers4_consumers4_topics1_partitions100_rf3_batchSize1048510_lingerMs10_mlen1024_targetRate1000k_time5m_warmup1m_acksall_insyncReplicas2_kafka_2.13-3.3.2",
+  "start_time": "2023-04-03T11:18:58",
+  "finish_time": "2023-04-03T11:18:58"
+}}}

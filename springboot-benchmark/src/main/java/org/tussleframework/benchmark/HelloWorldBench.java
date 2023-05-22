@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023, Azul Systems
+ * Copyright (c) 2021, Azul Systems
  * 
  * All rights reserved.
  * 
@@ -32,26 +32,36 @@
 
 package org.tussleframework.benchmark;
 
-import org.tussleframework.WlConfig;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.tussleframework.TussleException;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+public class HelloWorldBench extends HttpClientBenchmark {
 
-@Data
-@ToString(callSuper = false)
-@EqualsAndHashCode(callSuper = false)
-public class CassandraBenchmarkConfig extends WlConfig {
-    public String host = "localhost";
-    public String keyspace = "demo_keyspace";
-    public String table = "demo_table";
-    // TODO: public String[] startCmd = { "{CASSANDRA_HOME}/bin/cassandra", "-f" };
+    private static final java.util.logging.Logger log = java.util.logging.Logger.getGlobal();
+
+    private ConfigurableApplicationContext applicationContext;
+    
+    public HelloWorldBench() {
+    }
+
+    public HelloWorldBench(String[] args) throws TussleException {
+        init(args);
+    }
 
     @Override
-    public void validate(boolean runMode) {
-        super.validate(runMode);
-        if (host == null || host.isEmpty()) {
-            throw new IllegalArgumentException("Missing host");
+    public void init(String[] args) throws TussleException {
+        super.init(args);
+        applicationContext = SpringApplication.run(HelloWorldApp.class);
+    }
+
+    @Override
+    public void cleanup() {
+        super.cleanup();
+        if (applicationContext != null) {
+            log.info("Closing Springboot app...");
+            applicationContext.close();
+            applicationContext = null;
         }
     }
 }

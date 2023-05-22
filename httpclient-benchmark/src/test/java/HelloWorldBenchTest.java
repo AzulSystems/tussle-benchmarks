@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023, Azul Systems
+ * Copyright (c) 2021-2022, Azul Systems
  * 
  * All rights reserved.
  * 
@@ -30,28 +30,37 @@
  * 
  */
 
-package org.tussleframework.benchmark;
+import static org.junit.Assert.fail;
 
-import org.tussleframework.WlConfig;
+import org.junit.Test;
+import org.tussleframework.benchmark.HttpClientBenchmark;
+import org.tussleframework.runners.BasicRunner;
+import org.tussleframework.tools.LoggerTool;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+public class HelloWorldBenchTest {
 
-@Data
-@ToString(callSuper = false)
-@EqualsAndHashCode(callSuper = false)
-public class CassandraBenchmarkConfig extends WlConfig {
-    public String host = "localhost";
-    public String keyspace = "demo_keyspace";
-    public String table = "demo_table";
-    // TODO: public String[] startCmd = { "{CASSANDRA_HOME}/bin/cassandra", "-f" };
+    {
+        LoggerTool.init("", "java.util.logging.ConsoleHandler");
+    }
 
-    @Override
-    public void validate(boolean runMode) {
-        super.validate(runMode);
-        if (host == null || host.isEmpty()) {
-            throw new IllegalArgumentException("Missing host");
+    static final String SLAs = "[[50, 1, 10000], [90, 2, 20000], [99, 10, 30000]]";
+    
+    static final String[] runArgs = {
+            "warmupTime=5",
+            "runTime=20"
+    };
+
+    static final String[] benchArgs = {
+            "threads=4"
+    };
+
+    @Test
+    public void testHttpCLient() {
+        try {
+            new BasicRunner(runArgs).run(new HttpClientBenchmark(benchArgs));
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("failed");
         }
     }
 }

@@ -40,21 +40,29 @@ make_proj() {
     echo "Building $(pwd)..."
     mvn clean package -DskipTests && \
     from=$(find target -maxdepth 1 -name "*.${pak}") && \
-    to=../lib/${to##*/} && \
+    to=../lib/${from##*/} && \
+    echo cp -fv ${from} ${to} && \
     cp -fv ${from} ${to} && \
     chmod 777 ${to}
     )
 }
 
 make_sb() {
-    make_proj ${_BASE_DIR}/springboot-benchmark-app
+    make_proj ${_BASE_DIR}/springboot-benchmark
+}
+
+make_root() {
+    make_proj  ${_BASE_DIR}
+    local cli=$(find ${_BASE_DIR}/target -name "*.jar")
+    echo "Installing built file '${cli}' ..."
+    mvn install:install-file -Dfile=${cli} -DpomFile=${_BASE_DIR}/pom.xml
 }
 
 make_cli() {
-    make_proj  ${_BASE_DIR}/httpclient-benchmark-cli
-    local cli=$(find ${_BASE_DIR}/httpclient-benchmark-cli/target -name "*.jar")
+    make_proj  ${_BASE_DIR}/httpclient-benchmark jar
+    local cli=$(find ${_BASE_DIR}/httpclient-benchmark/target -name "*.jar")
     echo "Installing built file '${cli}' ..."
-    mvn install:install-file -Dfile=${cli} -DpomFile=pom.xml
+    mvn install:install-file -Dfile=${cli} -DpomFile=${_BASE_DIR}/httpclient-benchmark/pom.xml
 }
 
 make_io() {
@@ -70,4 +78,6 @@ make_isvviewer() {
 }
 
 mkdir -p lib
-make_cli && make_sb && make_io && make_sql && make_isvviewer
+#make_cli && make_sb && make_io && make_sql && make_isvviewer
+
+make_cli

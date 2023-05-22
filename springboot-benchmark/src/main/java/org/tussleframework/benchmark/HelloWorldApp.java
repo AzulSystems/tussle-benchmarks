@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023, Azul Systems
+ * Copyright (c) 2021, Azul Systems
  * 
  * All rights reserved.
  * 
@@ -32,26 +32,12 @@
 
 package org.tussleframework.benchmark;
 
-import org.tussleframework.WlConfig;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-
-@Data
-@ToString(callSuper = false)
-@EqualsAndHashCode(callSuper = false)
-public class CassandraBenchmarkConfig extends WlConfig {
-    public String host = "localhost";
-    public String keyspace = "demo_keyspace";
-    public String table = "demo_table";
-    // TODO: public String[] startCmd = { "{CASSANDRA_HOME}/bin/cassandra", "-f" };
-
-    @Override
-    public void validate(boolean runMode) {
-        super.validate(runMode);
-        if (host == null || host.isEmpty()) {
-            throw new IllegalArgumentException("Missing host");
-        }
+@SpringBootApplication
+public class HelloWorldApp {
+    public static void main(String[] args) {
+        SpringApplication.run(HelloWorldApp.class, args);
     }
 }

@@ -45,7 +45,8 @@ import com.datastax.driver.core.Session;
 /**
  * 
  * Run:
- *   java -jar target/tussle-demo-*.jar CassandraBenchmark {...benchmark-args} --runner BasicRunner {...runner-args}
+ *   java -jar target/cassandra-benchmark-*.jar # run using default: basic runner, 1 minute test run, etc.
+ *   java -jar target/cassandra-benchmark-*.jar {...benchmark-args} --runner BasicRunner {...runner-args}
  * 
  *
  */
@@ -115,7 +116,7 @@ public class CassandraBenchmark extends WlBenchmark {
 
     @Override
     public String getName() {
-        return "cassandra-demo";
+        return "cassandra-tussle";
     }
 
     @Override

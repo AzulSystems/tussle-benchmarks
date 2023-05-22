@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023, Azul Systems
+ * Copyright (c) 2021-2022, Azul Systems
  * 
  * All rights reserved.
  * 
@@ -29,29 +29,44 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  */
+import static org.junit.jupiter.api.Assertions.fail;
 
-package org.tussleframework.benchmark;
+import org.junit.jupiter.api.Test;
+import org.tussleframework.TussleException;
+import org.tussleframework.benchmark.HelloWorldBench;
+import org.tussleframework.runners.BasicRunner;
+import org.tussleframework.tools.Analyzer;
+import org.tussleframework.tools.LoggerTool;
 
-import org.tussleframework.WlConfig;
+class HelloWorldBenchTest {
+    
+    {
+        LoggerTool.init("", "java.util.logging.ConsoleHandler");
+    }
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+    static final String SLAs = "[[50, 1, 10000], [90, 2, 20000], [99, 10, 30000]]";
+    
+    static final String[] runArgs = {
+            "warmupTime=5",
+            "runTime=20"
+    };
 
-@Data
-@ToString(callSuper = false)
-@EqualsAndHashCode(callSuper = false)
-public class CassandraBenchmarkConfig extends WlConfig {
-    public String host = "localhost";
-    public String keyspace = "demo_keyspace";
-    public String table = "demo_table";
-    // TODO: public String[] startCmd = { "{CASSANDRA_HOME}/bin/cassandra", "-f" };
+    static final String[] benchArgs = {
+            "threads=4"
+    };
 
-    @Override
-    public void validate(boolean runMode) {
-        super.validate(runMode);
-        if (host == null || host.isEmpty()) {
-            throw new IllegalArgumentException("Missing host");
+    @Test
+    void testHttpCLient() {
+        try {
+            new BasicRunner(runArgs).run(new HelloWorldBench(benchArgs));
+        } catch (TussleException e) {
+            e.printStackTrace();
+            fail();
         }
+    }
+
+//    @Test TBD
+    public void testAnalyser() {
+        Analyzer.main(new String[] {  "results1/histograms", "10000", SLAs});
     }
 }

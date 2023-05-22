@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023, Azul Systems
+ * Copyright (c) 2021-2022, Azul Systems
  * 
  * All rights reserved.
  * 
@@ -32,26 +32,19 @@
 
 package org.tussleframework.benchmark;
 
-import org.tussleframework.WlConfig;
+import java.util.Arrays;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import org.tussleframework.Run;
+import org.tussleframework.tools.LoggerTool;
 
-@Data
-@ToString(callSuper = false)
-@EqualsAndHashCode(callSuper = false)
-public class CassandraBenchmarkConfig extends WlConfig {
-    public String host = "localhost";
-    public String keyspace = "demo_keyspace";
-    public String table = "demo_table";
-    // TODO: public String[] startCmd = { "{CASSANDRA_HOME}/bin/cassandra", "-f" };
-
-    @Override
-    public void validate(boolean runMode) {
-        super.validate(runMode);
-        if (host == null || host.isEmpty()) {
-            throw new IllegalArgumentException("Missing host");
+public class HelloWorldBenchRunner {
+    public static void main(String[] args) {
+        if (args.length > 0 && (args[0].equals("-server") || args[0].equals("--server"))) {
+            args = Arrays.copyOfRange(args, 1, args.length);
+            HelloWorldApp.main(args);
+        } else {
+            LoggerTool.init("benchmark");
+            Run.run(new HelloWorldBench(), args);
         }
     }
 }

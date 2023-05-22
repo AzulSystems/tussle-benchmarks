@@ -77,7 +77,7 @@ public class IOBenchmark extends WlBenchmark {
             } catch (IOException e) {
             }
         });
-        testFiles.forEach(tf -> tf.delete());
+        testFiles.forEach(File::delete);
     }
 
     @Override
@@ -88,6 +88,11 @@ public class IOBenchmark extends WlBenchmark {
             writeAndCloseSimple(iterartions.incrementAndGet() % 10, config.smallSize, config.flush);
             return true;
         };
+    }
+
+    @Override
+    public String getName() {
+        return "io-tussle";
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023, Azul Systems
+ * Copyright (c) 2021, Azul Systems
  * 
  * All rights reserved.
  * 
@@ -39,19 +39,9 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 @Data
-@ToString(callSuper = false)
-@EqualsAndHashCode(callSuper = false)
-public class CassandraBenchmarkConfig extends WlConfig {
-    public String host = "localhost";
-    public String keyspace = "demo_keyspace";
-    public String table = "demo_table";
-    // TODO: public String[] startCmd = { "{CASSANDRA_HOME}/bin/cassandra", "-f" };
-
-    @Override
-    public void validate(boolean runMode) {
-        super.validate(runMode);
-        if (host == null || host.isEmpty()) {
-            throw new IllegalArgumentException("Missing host");
-        }
-    }
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+public class HttpClientBenchmarkConfig extends WlConfig {
+    public String targetURI = "http://localhost:8080";
+    public int expectedHttpCode = 200;
 }

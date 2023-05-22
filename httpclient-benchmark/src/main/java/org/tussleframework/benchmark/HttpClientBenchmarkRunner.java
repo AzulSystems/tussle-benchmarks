@@ -32,26 +32,12 @@
 
 package org.tussleframework.benchmark;
 
-import org.tussleframework.WlConfig;
+import org.tussleframework.Run;
+import org.tussleframework.tools.LoggerTool;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-
-@Data
-@ToString(callSuper = false)
-@EqualsAndHashCode(callSuper = false)
-public class CassandraBenchmarkConfig extends WlConfig {
-    public String host = "localhost";
-    public String keyspace = "demo_keyspace";
-    public String table = "demo_table";
-    // TODO: public String[] startCmd = { "{CASSANDRA_HOME}/bin/cassandra", "-f" };
-
-    @Override
-    public void validate(boolean runMode) {
-        super.validate(runMode);
-        if (host == null || host.isEmpty()) {
-            throw new IllegalArgumentException("Missing host");
-        }
+public class HttpClientBenchmarkRunner {
+    public static void main(String[] args) {
+        LoggerTool.init("benchmark");
+        Run.run(new HttpClientBenchmark(), args);
     }
 }

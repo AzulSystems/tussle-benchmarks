@@ -12,16 +12,26 @@ https://github.com/AzulSystems/kafka-benchmark
 Project location: [cassandra-benchmark](cassandra-benchmark)
 
 Build:
-
 ```
 $ cd cassandra-benchmark/
 $ mvn clean package -DskipTests
 ```
-
+Usage
+```
+$ java -jar target/cassandra-benchmark-*.jar  # 
+$ java -jar target/cassandra-benchmark-*.jar  [...benchmark-args]  [--runner {tussle-benchmark-runner}  [{...runner-args}]]
+```
 Run:
+```
+# Test locally running Cassandra using default benchmark parameters (1 minute basic runner, etc.)
+$ java -jar target/cassandra-benchmark-*.jar 
 
 ```
-$ java -jar target/cassandra-benchmark-*.jar # test locally running Cassandra using default benchmark parameters (1 minute basic runner, etc.)
+
+Output:
+```
+2023-05-22 14:56:02,426,NOVT [BasicRunner] Benchmark config: !!org.tussleframework.benchmark.CassandraBenchmarkConfig
+...
 ```
 
 ## HTTP client benchmark

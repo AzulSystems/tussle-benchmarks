@@ -22,6 +22,7 @@ https://github.com/AzulSystems/kafka-benchmark
 
 ## Cassandra benchmark <a name="cassandra"/>
 Project location: [cassandra-benchmark](cassandra-benchmark)
+
 Build:
 ```
 $ cd cassandra-benchmark/
@@ -83,6 +84,7 @@ host: localhost
 
 ## HTTP client benchmark <a name="http"/>
 Project location: [httpclient-benchmark](httpclient-benchmark)
+
 Build:
 ```
 $ cd io-benchmark/
@@ -146,6 +148,7 @@ Project location: [springboot-benchmark-app](springboot-benchmark-app)
 
 ## IO benchmark <a name="io"/>
 Project location: [io-benchmark](io-benchmark)
+
 Build:
 ```
 $ cd io-benchmark/
@@ -209,6 +212,7 @@ Output:
 
 ## SQL benchmark <a name="sql"/>
 Project location: [sql-benchmark](sql-benchmark)
+
 Build:
 ```
 $ cd sql-benchmark/

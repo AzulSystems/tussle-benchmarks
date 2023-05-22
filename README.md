@@ -9,12 +9,20 @@ https://github.com/AzulSystems/kafka-benchmark
 
 ## Cassandra benchmark
 
-Location:
-[cassandra-benchmark](cassandra-benchmark)
+Project location: [cassandra-benchmark](cassandra-benchmark)
 
 Build:
-mvn clean package -DskipTests
 
+```
+$ cd cassandra-benchmark/
+$ mvn clean package -DskipTests
+```
+
+Run:
+
+```
+$ java -jar target/cassandra-benchmark-*.jar # test locally running Cassandra using default benchmark parameters (1 minute basic runner, etc.)
+```
 
 ## HTTP client benchmark
 

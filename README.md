@@ -1,12 +1,18 @@
 # Tussle benchmarks & tools
 
 ### This repository contains bunch of benchmark and tools projects.
-1. [Kafka benchmark](#kafka)
-2. [Cassandra benchmark](#cassandra)
-3. [HTTP client benchmark](#http)
-4. [Springboot benchmark](#springboot)
-5. [IO benchmark](#io)
-6. [SQL benchmark](#sql)
+1. [tussle-framework](#tussle-framework)
+2. [Kafka benchmark](#kafka)
+3. [Cassandra benchmark](#cassandra)
+4. [HTTP client benchmark](#http)
+5. [Springboot benchmark](#springboot)
+6. [IO benchmark](#io)
+7. [SQL benchmark](#sql)
+
+## Tussle Framework <a name="tussle-framework"/>
+
+Tussle Framework is a separate project which includes common benchmark runners, metrics, results processors, reporting, and etc.:
+https://github.com/AzulSystems/tussle-framework
 
 ## Kafka benchmark <a name="kafka"/>
 
@@ -35,8 +41,8 @@ $ java -jar target/cassandra-benchmark-*.jar
 ```
 Results:
 ```
-benchmark.log - benchmark output
-histograms - direcory containing collected result histograms
+benchmark.log - benchmark output file
+histograms - directory containing collected result histograms which can be processed and visualized using corresponding tool from the Tussle Framework
 ```
 Output:
 ```

@@ -27,11 +27,11 @@ Build:
 $ cd cassandra-benchmark/
 $ mvn clean package -DskipTests
 ```
-Usage
+Usage:
 ```
 $ java -jar target/cassandra-benchmark-*.jar  [...benchmark-args]  [--runner {tussle-benchmark-runner}  [{...runner-args}]]
 ```
-Run:
+Run example:
 ```
 # Test locally running Cassandra using default benchmark parameters (1 minute basic runner, etc.)
 $ java -jar target/cassandra-benchmark-*.jar 
@@ -88,13 +88,13 @@ Build:
 $ cd io-benchmark/
 $ mvn clean package -DskipTests
 ```
-Usage
+Usage:
 ```
-$ java -jar target/httpclient-benchmark-*.jar  [...benchmark-args]  [--runner {tussle-benchmark-runner}  [{...runner-args}]]
+$ java -jar target/httpclient-benchmark-*.jar  targetURI={test-uri} [expectedHttpCode=200]  [--runner {tussle-benchmark-runner}  [{...runner-args}]]
 ```
-Run:
+Run example:
 ```
-$ java -jar target/httpclient-benchmark-*.jar
+$ java -jar target/httpclient-benchmark-*.jar targetURI=https://apache.org/ --runner BasicRunner targetRate=1
 ```
 Results:
 ```
@@ -103,10 +103,46 @@ histograms - directory containing collected result histograms which can be proce
 ```
 Output:
 ```
+2023-05-23 02:25:54,858,NOVT [BasicRunner] Benchmark config: !!org.tussleframework.benchmark.HttpClientBenchmarkConfig {async: false, expectedHttpCode: 200,
+...
+2023-05-23 02:25:54,905,NOVT [BasicRunner] =================================================================== 
+2023-05-23 02:25:54,906,NOVT [BasicRunner] Run once: HttpClientBenchmark (step 1) started 
+2023-05-23 02:25:54,907,NOVT [BasicRunner] Benchmark reset... 
+2023-05-23 02:25:54,909,NOVT [BasicRunner] Benchmark run at target rate 1 op/s (100%), warmup 0 s, run time 60 s... 
+2023-05-23 02:25:54,924,NOVT [TargetRunnerST] Starting: target rate 1 op/s, time 60000 ms... 
+2023-05-23 02:25:59,931,NOVT [HdrWriter] -------------------------------------------------------------------------------------------------------------------------- 
+2023-05-23 02:25:59,937,NOVT [HdrWriter]           name |   time |  progr |    p50ms |    p90ms |    p99ms |   p100ms |     mean |    count |     rate |    total 
+2023-05-23 02:25:59,940,NOVT [HdrWriter] -------------------------------------------------------------------------------------------------------------------------- 
+2023-05-23 02:25:59,974,NOVT [HdrWriter]  http_get resp |      5 |   8.4% |      292 |      591 |      591 |      591 |      356 |        5 |   0.9992 |        5 
+2023-05-23 02:25:59,981,NOVT [HdrWriter]  http_get serv |      5 |   8.4% |      292 |      591 |      591 |      591 |      356 |        5 |   0.9895 |        5 
+...
+2023-05-23 02:26:54,925,NOVT [HdrWriter]  http_get serv |     60 | 100.0% |      253 |      271 |      271 |      271 |      258 |        5 |        1 |       60 
+2023-05-23 02:26:54,930,NOVT [HdrWriter]  http_get resp |     60 | 100.0% |      253 |      271 |      271 |      271 |      258 |        5 |   0.9992 |       60 
+2023-05-23 02:26:55,929,NOVT [TargetRunnerST] Result: RunResult(rateUnits=op/s, timeUnits=ms, actualRate=1.0, errors=0, count=60, time=60000) 
+2023-05-23 02:26:55,941,NOVT [BasicRunner] Reguested rate 1 op/s (100%) , actual rate 1 op/s 
+2023-05-23 02:26:55,942,NOVT [BasicRunner] ----------------------------------------------------- 
+2023-05-23 02:26:55,944,NOVT [BasicRunner] Run once: HttpClientBenchmark (step 1) finished 
+2023-05-23 02:26:55,945,NOVT [BasicRunner] Results (step 1) 
+2023-05-23 02:26:55,946,NOVT [BasicRunner] Count: 60 
+2023-05-23 02:26:55,947,NOVT [BasicRunner] Time: 60 s 
+2023-05-23 02:26:55,948,NOVT [BasicRunner] Rate: 1 op/s 
+2023-05-23 02:26:55,948,NOVT [BasicRunner] Errors: 0 
+2023-05-23 02:26:55,951,NOVT [BasicRunner] http_get response_time time: 60 s 
+2023-05-23 02:26:55,953,NOVT [BasicRunner] http_get response_time p0: 245 ms 
+2023-05-23 02:26:55,953,NOVT [BasicRunner] http_get response_time p50: 271 ms 
+2023-05-23 02:26:55,954,NOVT [BasicRunner] http_get response_time p90: 293 ms 
+2023-05-23 02:26:55,955,NOVT [BasicRunner] http_get response_time p99: 591 ms 
+2023-05-23 02:26:55,955,NOVT [BasicRunner] http_get response_time p99.9: 591 ms 
+2023-05-23 02:26:55,956,NOVT [BasicRunner] http_get response_time p99.99: 591 ms 
+2023-05-23 02:26:55,957,NOVT [BasicRunner] http_get response_time p100: 591 ms 
+2023-05-23 02:26:55,958,NOVT [BasicRunner] http_get response_time mean: 279 ms 
+2023-05-23 02:26:55,959,NOVT [BasicRunner] http_get response_time rate: 0.9999 op/s 
+...
 ```
 
 ## Springboot benchmark <a name="springboot"/>
 Project location: [springboot-benchmark-app](springboot-benchmark-app)
+// in progress
 
 ## IO benchmark <a name="io"/>
 Project location: [io-benchmark](io-benchmark)
@@ -115,7 +151,7 @@ Build:
 $ cd io-benchmark/
 $ mvn clean package -DskipTests
 ```
-Usage
+Usage:
 ```
 $ java -jar target/io-benchmark-*.jar  [...benchmark-args]  [--runner {tussle-benchmark-runner}  [{...runner-args}]]
 ```
@@ -178,7 +214,7 @@ Build:
 $ cd sql-benchmark/
 $ mvn clean package -DskipTests
 ```
-Usage
+Usage:
 ```
 $ java -jar target/sql-benchmark-*.jar  [...benchmark-args]  [--runner {tussle-benchmark-runner}  [{...runner-args}]]
 ```

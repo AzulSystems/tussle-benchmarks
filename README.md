@@ -17,7 +17,7 @@ https://github.com/AzulSystems/tussle-framework
 
 ## Kafka benchmark <a name="kafka"/>
 
-Available as separate project:
+Available as a separate project:
 https://github.com/AzulSystems/kafka-benchmark
 
 ## Cassandra benchmark <a name="cassandra"/>

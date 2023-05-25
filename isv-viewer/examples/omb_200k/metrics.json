@@ -61,16 +61,6 @@
       "start" : 0,
       "finish" : 0,
       "delay" : 10000,
-      "name" : "backlog",
-      "host" : "",
-      "metricValues" : [ {
-        "type" : "VALUES",
-        "values" : [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
-      } ]
-    }, {
-      "start" : 0,
-      "finish" : 0,
-      "delay" : 10000,
       "name" : "service_time",
       "host" : "",
       "units" : "ms",

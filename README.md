@@ -15,6 +15,10 @@
 Tussle Framework is a separate project which includes common set of benchmark runners, metrics, result processors, reporter, and etc.:
 https://github.com/AzulSystems/tussle-framework
 
+This framework is required to build all Tussle benchmarks
+$ cd tussle-framework/
+$ ./build.sh
+
 ## Kafka benchmark <a name="kafka"/>
 
 Available as a separate project:

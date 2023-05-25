@@ -1,0 +1,35 @@
+{
+  "doc" : {
+    "metrics" : [ {
+      "name" : "mixed",
+      "units" : "UNIT",
+      "metricValues" : [ {
+        "type" : "VALUES",
+        "values" : [ 1, 2, 3, 4, 5, 4, 3, 2, 1, 2, 3, 4, 5, 4, 3, 2, 3, 4, 3, 2, 1 ]
+      }, {
+        "type" : "OTHER_VALUES",
+        "values" : [ 13, 11, 13, 11, 19, 15, 13, 12, 11, 12, 11, 12, 17, 14, 13, 12, 13, 14, 13, 12, 11 ]
+      }, {
+        "type" : "MORE_VALUES",
+        "values" : [ 23, 22, 23, 21, 21, 21, 23, 22, 21, 22, 21, 22, 21, 28, 21, 22, 23, 29, 21, 22, 25 ]
+      } ]
+    }, {
+      "name" : "fibonacci",
+      "metricValues" : [ {
+        "type" : "VALUES",
+        "values" : [ 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987 ]
+      } ]
+    }, {
+      "name" : "value_a",
+      "value" : 555
+    }, {
+      "name" : "value_b",
+      "units" : "op/s",
+      "value" : 77
+    }, {
+      "name" : "value_c",
+      "units" : "ms",
+      "value" : 0.123
+    } ]
+  }
+}

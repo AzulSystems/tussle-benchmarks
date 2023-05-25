@@ -1,0 +1,8 @@
+{
+  "doc" : {
+    "metrics" : [ {
+      "name" : "single_value",
+      "value" : 123
+    } ]
+  }
+}

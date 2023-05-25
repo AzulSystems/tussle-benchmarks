@@ -89,8 +89,16 @@ Use "Values" section to show or hide numeric values of interest:
 
 ### Examples
 
-View example results from [examples](examples) included in the project:
+View result from [examples](examples) included in the project:
    
 http://localhost:8080/perf/#!?r=/local/path/to/tussle-benchmarks/isv-viewer/examples/res_omb_200k
+
+Compare two results from [examples](examples) included in the project:
    
 http://localhost:8080/perf/#!?r=/local/path/to/tussle-benchmarks/isv-viewer/examples/res_omb_200k,/local/path/to/tussle-benchmarks/isv-viewer/examples/res_omb_1000k
+
+Search results from [examples](examples) included in the project:
+  
+http://localhost:8080/perf/#!?search=/local/path/to/tussle-benchmarks/isv-viewer/examples
+  
+  k)

@@ -2,7 +2,11 @@
 #### Setup
 Build:
 ```
-$ cd isv-viewer/
+# build and install required Tussle Framework (https://github.com/AzulSystems/tussle-framework) in local maven (~/.m2) reprository
+$ cd tussle-framework/
+$ ./build.sh
+# build ISV viewer server
+$ cd tussle-benchmarks/isv-viewer/
 $ mvn clean package -DskipTests
 ```
 Run server as standalone springboot application:
